@@ -19,11 +19,12 @@ classdef shapeColor < virmenShape
             end
         end
         function [x y] = coords2D(obj)
-            loc = obj.locations;
-            x = loc(:,1);
+            x = obj.locations;
+            x = x(:,1);
             x = [x'; NaN(size(x'))];
             x = x(:);
-            y = loc(:,2);
+            y = obj.locations;
+            y = y(:,2);
             y = [y'; NaN(size(y'))];
             y = y(:);
         end

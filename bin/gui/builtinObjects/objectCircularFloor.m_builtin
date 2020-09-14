@@ -59,7 +59,7 @@ classdef objectCircularFloor < virmenObject
             
             objSurface.vertices = zeros(0,3);
             objSurface.triangulation = zeros(0,3);
-            loc = obj.locations;
+            loc = loc;
             for ndx = 1:size(loc,1)
                 objSurface.triangulation = [objSurface.triangulation; texture.triangles.triangulation+size(objSurface.vertices,1)];
                 objSurface.vertices = [objSurface.vertices; bsxfun(@plus,[x y],loc(ndx,:)) repmat(obj.elevation,size(x,1),1)];
@@ -67,8 +67,7 @@ classdef objectCircularFloor < virmenObject
             objSurface.cdata = repmat(texture.triangles.cdata,size(loc,1),1);
         end
         function edges = edges(obj)
-            loc = obj.locations;
-            edges = [loc loc];
+            edges = [obj.locations obj.locations];
         end
     end
 end

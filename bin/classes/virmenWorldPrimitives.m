@@ -8,5 +8,6 @@ classdef virmenWorldPrimitives
     end
     properties (Hidden = true)
         walls = struct;
+        changed = false;
     end
 end

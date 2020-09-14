@@ -44,7 +44,6 @@ classdef objectVerticalWall < virmenObject
             pos = pos/pos(end);
             X = zeros(size(x));
             Y = zeros(size(x));
-            loc = obj.locations;
             for ndx = 1:length(pos)-1
                 f = find(x_norm(:)>=pos(ndx));
                 X(f) = loc(ndx,1)+(x_norm(f)-pos(ndx))/(pos(ndx+1)-pos(ndx))*(loc(ndx+1,1)-loc(ndx,1));

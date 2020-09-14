@@ -1,1 +1,0 @@
-Directory for ViRMEn engine and GUI code. Contents of this directory should not be modified by the user.

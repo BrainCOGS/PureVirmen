@@ -1,2 +1,2 @@
-movementFunction	movePointer
+movementFunction	moveWithAutoKeyboard
 transformationFunction	transformPerspectiveMex

@@ -21,7 +21,7 @@ classdef objectIdenticalWalls < virmenObject
             y = zeros(0,1);
             z = zeros(0,1);
             loc = obj.locations;
-            for ndx = 1:size(loc,1)
+            for ndx = 1:size(obj.locations,1)
                 x = [x; loc(ndx,1)+sz(1)*[-1 1 1 -1 -1 1 NaN 1 -1 NaN]']; %#ok<AGROW>
                 y = [y; loc(ndx,2)+sz(2)*[-1 1 1 -1 -1 1 NaN 1 -1 NaN]']; %#ok<AGROW>
                 z = [z; obj.bottom; obj.bottom; obj.top; obj.top; obj.bottom; obj.top; NaN; obj.bottom; obj.top; NaN]; %#ok<AGROW>

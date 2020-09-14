@@ -1,24 +1,22 @@
 	changeHistory	highlight	experimentProperties	variablesTable	worldSketch	objectProperties	worldsMenu	worldDrawing	textureSketch	shapeProperties	textureDrawing
 startProgram	1	worldsMenu	1	1	1	1	1	1	1	1	1
 editCode	0	0	0	0	0	0	0	0	0	0	0
-runMacro	1	0	1	1	1	1	1	1	1	1	1
-changeMacroSettings	1	0	0	0	0	0	0	0	0	0	0
-selectShape	1	0	0	0	0	0	0	0	1	1	1
+shapeClick	0	0	0	0	0	0	0	0	1	1	1
 addShape	1	textureSketch	0	0	0	0	0	0	1	1	0
 deleteShape	1	textureSketch	0	0	0	0	0	0	1	1	0
 computeTexture	1	0	0	0	0	1	1	1	0	0	1
 refineTexture	0	0	0	0	0	0	0	0	0	0	0
 changeTextureRefining	1	0	0	1	0	1	1	1	0	0	1
-changeTriangulationVisibility	1	0	0	0	0	1	0	0	0	0	1
-changeTriangulationColor	1	0	0	0	0	1	0	0	0	0	1
-zoomOnTexture	1	textureSketch	0	0	0	0	0	0	1	0	1
-zoomOnWorld	1	worldSketch	0	0	1	0	0	0	0	0	0
-selectObject	1	0	0	0	1	1	0	0	1	1	1
+showTriangulation	0	0	0	0	0	1	0	0	0	0	1
+triangulationColor	0	0	0	0	0	1	0	0	0	0	1
+textureSketchClick	0	textureSketch	0	0	0	0	0	0	1	0	1
+worldSketchClick	0	worldSketch	0	0	1	0	0	0	0	0	0
+objectClick	0	0	0	0	1	1	0	0	1	1	1
 addObject	1	worldSketch	0	0	1	1	1	0	1	1	1
 deleteObject	1	worldSketch	0	0	1	1	1	1	1	1	1
 changeWorldBackground	1	0	0	0	0	1	0	1	0	0	1
 changeWorldTransparency	1	0	0	0	0	0	0	1	0	0	0
-switchWireframe	1	0	0	0	0	0	0	1	0	0	0
+switchWireframe	0	0	0	0	0	0	0	1	0	0	0
 changeView	0	0	0	0	0	0	0	0	0	0	0
 rotateView	0	0	0	0	0	0	0	0	0	0	0
 changeTiling	1	objectProperties	0	1	0	1	0	1	0	0	0
@@ -40,7 +38,7 @@ openExperiment	0	0	1	1	1	1	1	1	1	1	1
 newExperiment	0	0	1	1	1	1	1	1	1	1	1
 changeHistory	0	0	1	1	1	1	1	1	1	1	1
 changeExperimentProperties	1	experimentProperties	1	0	0	0	0	0	0	0	0
-selectWorld	1	worldsMenu	0	0	1	1	1	1	1	1	1
+clickWorld	0	worldsMenu	0	0	1	1	1	1	1	1	1
 editWorld	0	worldSketch	0	0	1	1	1	1	1	1	1
 renameWorld	1	worldsMenu	0	0	1	0	1	1	0	0	0
 sortWorlds	1	worldsMenu	0	0	0	0	1	0	0	0	0
@@ -48,7 +46,7 @@ addWorld	1	worldsMenu	0	0	1	1	1	1	1	1	1
 deleteWorld	1	worldsMenu	0	0	1	1	1	1	1	1	1
 addVariable	1	variablesTable	0	1	0	0	0	0	0	0	0
 deleteVariables	1	variablesTable	0	1	0	0	0	0	0	0	0
-renameVariables	1	variablesTable	0	1	0	1	0	0	0	1	0
+renameVariable	1	variablesTable	0	1	0	1	0	0	0	1	0
 sortVariables	1	variablesTable	0	1	0	0	0	0	0	0	0
 addObjectLocation	1	objectProperties	0	1	1	1	1	1	0	0	0
 deleteObjectLocations	1	objectProperties	0	1	1	1	1	1	0	0	0
@@ -62,7 +60,5 @@ run	0	0	1	0	0	0	0	0	0	0	0
 listVariables	0	0	0	1	0	0	0	0	0	0	0
 export	0	0	0	0	0	0	0	0	0	0	0
 manual	0	0	0	0	0	0	0	0	0	0	0
-about	0	0	0	0	0	0	0	0	0	0	0
 resizeFigure	0	0	0	0	1	0	1	0	1	0	1
-closeProgram	0	0	0	0	0	0	0	0	0	0	0
 LAYOUT	0	0	0	0	0	0	0	0	0	0	0

@@ -36,6 +36,10 @@ function err = virmenEngine(exper)
 % possibility of those damages.
 % *************************************************************************
 
+% Clean up in case of an incorrect exit (e.g. user terminated Virmen by stopping debug mode)
+drawnow;
+virmenOpenGLRoutines(2);
+
 % No error by default
 err = -1;
 
@@ -44,7 +48,7 @@ vr.exper = exper;
 vr.code = exper.experimentCode(); %#ok<*STRNU>
 [letterGrid, letterFont, letterAspectRatio] = virmenLoadFont;
 [windows, transformations] = virmenLoadWindows(exper);
-vr.windows = windows(1:4,:)';
+
 
 % Load worlds
 vr.worlds = struct([]);
@@ -59,9 +63,7 @@ end
 vr.experimentEnded = false;
 vr.currentWorld = 1;
 vr.position = vr.worlds{vr.currentWorld}.startLocation;
-vr.movement = NaN(1,4);
-vr.movementType = 'velocity';
-vr.velocity = NaN(1,4);
+vr.velocity = [0 0 0 0];
 vr.dt = NaN;
 vr.dp = NaN(1,4);
 vr.dpResolution = inf;
@@ -79,6 +81,18 @@ vr.cursorPosition = NaN;
 vr.iterations = 0;
 vr.timeStarted = NaN;
 vr.timeElapsed = 0;
+vr.sensorData = [];
+
+% Configurations that depend on user functions
+if exist(func2str(vr.exper.transformationFunction),'file') == 3   % MEX programs don't report nargin
+  numTransformInputs = 1;
+else
+  numTransformInputs = nargin(vr.exper.transformationFunction);
+end
+numMovementOutputs = nargout(vr.exper.movementFunction);
+if numMovementOutputs == 3
+  vr.movementExtras = [];
+end
 
 % Initialize an OpenGL window
 drawnow;
@@ -97,41 +111,49 @@ catch ME
 end
 
 % Initialize engine
-oldWorld = vr.currentWorld;
-oldColorSize = size(vr.worlds{vr.currentWorld}.surface.colors,1);
-drawnow;
-virmenOpenGLRoutines(3,oldColorSize);
-oldBackgroundColor = vr.worlds{vr.currentWorld}.backgroundColor;
-drawnow;
-virmenOpenGLRoutines(4,oldBackgroundColor);
+oldWorld = NaN;
+oldBackgroundColor = [NaN NaN NaN];
+oldColorSize = NaN;
 vr.timeStarted = now;
+
+% Timing related info
+firstTic = tic;
+vr.dt = 0; % Don't move on the first time step
+
 
 % Run engine
 while ~vr.experimentEnded
     % Update the number of iterations
     vr.iterations = vr.iterations + 1;
     
-    % Determine time elapsed since the start of the iteration
-    if vr.iterations == 1
-        vr.dt = 0; % Don't move on the first time step
-        firstTic = tic;
-    else
-        vr.dt = toc(firstTic) - vr.timeElapsed; % End timer to determine time step duration
-        vr.timeElapsed = vr.timeElapsed + vr.dt;
+    % Switch worlds, if necessary
+    if vr.currentWorld ~= oldWorld
+        oldWorld = vr.currentWorld;
     end
-        
+    
+    % Set transparency options, if necessary
+    if oldColorSize ~= size(vr.worlds{vr.currentWorld}.surface.colors,1)
+        oldColorSize = size(vr.worlds{vr.currentWorld}.surface.colors,1);
+        drawnow;
+        virmenOpenGLRoutines(3,oldColorSize);
+    end
+    
+    % Set world background color, if necessary
+    if ~all(oldBackgroundColor==vr.worlds{vr.currentWorld}.backgroundColor)
+        oldBackgroundColor = vr.worlds{vr.currentWorld}.backgroundColor;
+        drawnow;
+        virmenOpenGLRoutines(4,oldBackgroundColor);
+    end
+
+    
     % Input movement information
     try
-        try
-            numOutputs = nargout(vr.exper.movementFunction);
-        catch %#ok<CTCH>
-            numOutputs = 1;
-        end
-        if numOutputs == 1
-            vr.movement = vr.exper.movementFunction(vr);
-            vr.movementType = 'velocity';
+        if numMovementOutputs == 2
+            [vr.velocity, vr.sensorData] = vr.exper.movementFunction(vr);
+        elseif numMovementOutputs == 3
+            [vr.velocity, vr.sensorData, vr.movementExtras] = vr.exper.movementFunction(vr, vr.movementExtras);
         else
-            [vr.movement, vr.movementType] = vr.exper.movementFunction(vr);
+            vr.velocity = vr.exper.movementFunction(vr);
         end
     catch ME
         drawnow;
@@ -141,30 +163,19 @@ while ~vr.experimentEnded
         err.stack = ME.stack(1:end-1);
         return
     end
-    
-    % Process movement information
-    switch vr.movementType(1)
-        case 'v' % velocity
-            vr.velocity = vr.movement;
-            vr.dp = vr.velocity*vr.dt;
-        case 'd' % displacement
-            vr.dp = vr.movement;
-            vr.velocity = vr.dp/vr.dt;
-        case 'p' % position
-            vr.dp = movement-vr.position;
-            vr.velocity = vr.dp/vr.dt;
-    end
+
+    % Calculate displacement
+    vr.dp = vr.velocity*vr.dt;
     
     % Detect collisions with edges (continuous-time collision detection)
-    if ~strcmp(vr.movementType(1),'p')
-        [vr.dp(1:2), vr.collision] = virmenResolveCollisions(vr.position(1:2),vr.dp(1:2), ...
-            vr.worlds{vr.currentWorld}.walls.endpoints,vr.worlds{vr.currentWorld}.walls.radius2, ...
-            vr.worlds{vr.currentWorld}.walls.angle,vr.worlds{vr.currentWorld}.walls.border1, ...
-            vr.worlds{vr.currentWorld}.walls.border2,vr.dpResolution);
-    else
-        vr.collision = false;
-    end
+    [vr.dp(1:2), vr.collision] = virmenResolveCollisions(vr.position(1:2),vr.dp(1:2), ...
+        vr.worlds{vr.currentWorld}.walls.endpoints,vr.worlds{vr.currentWorld}.walls.radius2, ...
+        vr.worlds{vr.currentWorld}.walls.angle,vr.worlds{vr.currentWorld}.walls.border1, ...
+        vr.worlds{vr.currentWorld}.walls.border2,vr.dpResolution);
     
+    % Update position
+    vr.position = vr.position + vr.dp;
+
     % Run custom code on each engine iteration
     try
         vr = vr.code.runtime(vr);
@@ -186,43 +197,16 @@ while ~vr.experimentEnded
     vr.modifiers = NaN;
     vr.activeWindow = NaN;
     
-    % Switch worlds, if necessary
-    if vr.currentWorld ~= oldWorld
-        oldWorld = vr.currentWorld;
-    end
-    
-    % Set transparency options, if necessary
-    if oldColorSize ~= size(vr.worlds{vr.currentWorld}.surface.colors,1)
-        oldColorSize = size(vr.worlds{vr.currentWorld}.surface.colors,1);
-        drawnow;
-        virmenOpenGLRoutines(3,oldColorSize);
-    end
-    
-    % Set world background color, if necessary
-    if ~all(oldBackgroundColor==vr.worlds{vr.currentWorld}.backgroundColor)
-        oldBackgroundColor = vr.worlds{vr.currentWorld}.backgroundColor;
-        drawnow;
-        virmenOpenGLRoutines(4,oldBackgroundColor);
-    end
-    
-    % Update position
-    vr.position = vr.position+vr.dp;
-    
     % Translate+rotate coordinates and calculate distances from animal
     [vertexArray, distance] = virmenProcessCoordinates(vr.worlds{oldWorld}.surface.vertices,vr.position);
     
     % Transform 3D coordinates to 2D screen coordinates
     try
-        try
-            numInputs = nargin(vr.exper.transformationFunction);
-        catch %#ok<CTCH>
-            numInputs = 2;
-        end
-        if numInputs == 2
-            vertexArrayTransformed = vr.exper.transformationFunction(vertexArray,vr);
-        else
-            vertexArrayTransformed = vr.exper.transformationFunction(vertexArray);
-        end
+      if numTransformInputs == 2
+        vertexArrayTransformed = vr.exper.transformationFunction(vertexArray, vr);
+      else
+        vertexArrayTransformed = vr.exper.transformationFunction(vertexArray);
+      end
     catch ME
         drawnow;
         virmenOpenGLRoutines(2);
@@ -236,7 +220,8 @@ while ~vr.experimentEnded
     nDim = size(vertexArrayTransformed,3);
     
     % Extract triangles visible in each transformation
-    triangles = virmenVisibleTriangles(vr.worlds{oldWorld}.surface.triangulation,vertexArrayTransformed,nDim,size(vertexArrayTransformed,2),vr.worlds{oldWorld}.surface.visible);
+    triangles = virmenVisibleTriangles(vr.worlds{oldWorld}.surface.triangulation,vertexArrayTransformed ...
+                                      ,nDim,size(vertexArrayTransformed,2),vr.worlds{oldWorld}.surface.visible);
     
     % Assign distances as the z coordinate
     for d = 1:nDim
@@ -330,10 +315,13 @@ while ~vr.experimentEnded
         % Render the environment
         if ~isnan(transformations(wind)) && transformations(wind) <= nDim
             [keyPressed, keyReleased, buttonPressed, buttonReleased, modifiers, activeWindow, vr.cursorPosition(wind,:)] = ...
-                virmenOpenGLRoutines(1,vertexArrayTransformed,triangles,vr.worlds{oldWorld}.surface.colors,coords,int32(indices),colors,wind,transformations(wind),3*size(vertexArrayTransformed,2),3*size(triangles,2));
+                virmenOpenGLRoutines(1,vertexArrayTransformed,triangles,vr.worlds{oldWorld}.surface.colors ...
+                                    ,coords,int32(indices),colors,wind,transformations(wind) ...
+                                    ,3*size(vertexArrayTransformed,2),3*size(triangles,2) ...
+                                    ,vr.worlds{oldWorld}.changed);
         else
             [keyPressed, keyReleased, buttonPressed, buttonReleased, modifiers, activeWindow, vr.cursorPosition(wind,:)] = ...
-                virmenOpenGLRoutines(1,[],[],[],coords,int32(indices),colors,wind,0,0,0);
+                virmenOpenGLRoutines(1,[],[],[],coords,int32(indices),colors,wind,0,0,0,false);
         end
         
         % Process user inputs (keyboard and mouse)
@@ -357,26 +345,36 @@ while ~vr.experimentEnded
         end
     end
     
-    % Determine text position boundaries
-    textBoundaries = zeros(length(vr.text),4);
-    for ndx = 1:length(vr.text)
-        textBoundaries(ndx,:) = [vr.text(ndx).position ...
-            vr.text(ndx).position(1)+vr.text(ndx).size*length(vr.text(ndx).string) ...
-            vr.text(ndx).position(2)+vr.text(ndx).size*letterAspectRatio];
-    end
-    
-    % Determine which text box, if any, was clicked
-    if ~isnan(vr.buttonPressed)
-        x = 2*vr.cursorPosition(vr.activeWindow,1)/windows(4,vr.activeWindow)-windows(3,vr.activeWindow)/windows(4,vr.activeWindow);
-        y = 1-2*vr.cursorPosition(vr.activeWindow,2)/windows(4,vr.activeWindow);
-        for t = 1:length(vr.text)
-            if vr.text(t).window == vr.activeWindow
-                if x >= textBoundaries(t,1) && x <= textBoundaries(t,3) && ...
-                        y >= textBoundaries(t,2) && y <= textBoundaries(t,4)
-                    vr.textClicked = t;
-                end
-            end
-        end
+    % Use the end of buffer swap to evaluate frame duration
+    timeElapsed = toc(firstTic);
+    vr.dt = timeElapsed - vr.timeElapsed;
+    vr.timeElapsed = timeElapsed;
+        
+    % Mark changes to world geometry as resolved, to cache graphics
+    vr.worlds{oldWorld}.changed = false;
+
+    if ~isempty(vr.text)
+      % Determine text position boundaries
+      textBoundaries = zeros(length(vr.text),4);
+      for ndx = 1:length(vr.text)
+          textBoundaries(ndx,:) = [vr.text(ndx).position ...
+              vr.text(ndx).position(1)+vr.text(ndx).size*length(vr.text(ndx).string) ...
+              vr.text(ndx).position(2)+vr.text(ndx).size*letterAspectRatio];
+      end
+
+      % Determine which text box, if any, was clicked
+      if ~isnan(vr.buttonPressed)
+          x = 2*vr.cursorPosition(vr.activeWindow,1)/windows(5,vr.activeWindow)-windows(4,vr.activeWindow)/windows(5,vr.activeWindow);
+          y = 1-2*vr.cursorPosition(vr.activeWindow,2)/windows(5,vr.activeWindow);
+          for t = 1:length(vr.text)
+              if vr.text(t).window == vr.activeWindow
+                  if x >= textBoundaries(t,1) && x <= textBoundaries(t,3) && ...
+                          y >= textBoundaries(t,2) && y <= textBoundaries(t,4)
+                      vr.textClicked = t;
+                  end
+              end
+          end
+      end
     end
     
     % Check if experiment if over
@@ -391,14 +389,14 @@ disp(['Ran ' num2str(vr.iterations-1) ' iterations in ' num2str(vr.timeElapsed,4
 
 % Run termination code
 try
-    vr.code.termination(vr);
+      vr.code.termination(vr);
 catch ME
-    drawnow;
-    virmenOpenGLRoutines(2);
-    err = struct;
-    err.message = ME.message;
-    err.stack = ME.stack(1:end-1);
-    return
+      drawnow;
+      virmenOpenGLRoutines(2);
+      err = struct;
+      err.message = ME.message;
+      err.stack = ME.stack(1:end-1);
+      return
 end
 
 % Close the window used by ViRMEn

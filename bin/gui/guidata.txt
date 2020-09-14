@@ -5,20 +5,18 @@ Open experiment	Experiment	Open…	n/a	button	openExperiment	n/a	on	open
 Save experiment	Experiment	Save…	n/a	button	saveExperiment	n/a	off	save
 New experiment	Experiment	New	n/a	button	newExperiment	n/a	off	new
 Edit code	Experiment	Edit code	n/a	dropdown	listEdit	n/a	on	matlab
-Run macro	Experiment	Run macro	n/a	dropdown	listMacros	n/a	off	macros
-Macro settings	Experiment	Macro settings…	n/a	dropdown	listMacroSettings	n/a	off	settings_macros
 Export	Experiment	Export	n/a	dropdown	listExports	n/a	on	export
 Undo	GUI	Undo	n/a	button	changeHistory	undo	on	undo
 Redo	GUI	Redo	n/a	button	changeHistory	redo	off	redo
 Experiment layout	GUI	Experiment layout	n/a	button	builtinLayout	experiment	on	experiment
 World layout	GUI	World layout	n/a	button	builtinLayout	world	off	world
 Texture layout	GUI	Texture layout	n/a	button	builtinLayout	texture	off	texture
-3D world view	GUI	3D world view	n/a	button	builtinLayout	3d	off	threeD
-Layout	GUI	Layout	n/a	dropdown	listLayouts	n/a	off	layout
+3D world view	GUI	3D world view	n/a	button	builtinLayout	3d	on	threeD
+Layout	GUI	Layout	n/a	dropdown	listLayouts	n/a	on	layout
 Variables table	Variables	Table…	n/a	button	listVariables	n/a	on	variable
 Add variable	Variables	Add…	variablesTable	button	addVariable	n/a	on	add_variable
 Delete variable(s)	Variables	Delete	variablesTable	button	deleteVariables	n/a	off	delete_variable
-Rename variable(s)	Variables	Rename…	variablesTable	button	renameVariables	n/a	off	rename_variable
+Rename variable	Variables	Rename…	variablesTable	button	renameVariable	n/a	off	rename_variable
 Sort variables	Variables	Sort…	variablesTable	button	sortVariables	n/a	off	sort_variable
 Add world	World	Add	worldsMenu	button	addWorld	n/a	on	add_world
 Import world	World	Import…	worldsMenu	button	importWorld	n/a	off	import_world
@@ -54,10 +52,10 @@ Delete shape	Texture	Delete shape	textureSketch	button	deleteShape	n/a	off	delet
 Rename shape	Texture	Rename shape…	textureSketch	button	renameShape	n/a	off	rename_shape
 Sort shapes	Texture	Sort shapes…	textureSketch	button	sortShapes	n/a	off	sort_shape
 Add color	Texture	Add color	textureSketch	button	addShape	shapeColor	on	add_color
-Set color	Texture	Set color…	textureSketch	button	selectShape	n/a	off	import_color
+Set color	Texture	Set color…	textureSketch	button	shapeClick	n/a	off	import_color
 Refine triangulation	Texture	Refine triangulation…	"textureSketch,textureDrawing"	button	refineTexture	n/a	on	refineTexture
-Show/hide triangulation	Texture	Show triangulation	"textureSketch,textureDrawing"	toggle	changeTriangulationVisibility	n/a	off	showTriangulation
-Triangulation mesh color	Texture	Mesh color…	"textureSketch,textureDrawing"	button	changeTriangulationColor	n/a	off	triangulationColor
+Show/hide triangulation	Texture	Show triangulation	"textureSketch,textureDrawing"	toggle	showTriangulation	n/a	off	showTriangulation
+Triangulation mesh color	Texture	Mesh color…	"textureSketch,textureDrawing"	button	triangulationColor	n/a	off	triangulationColor
 Compute texture	Texture	Compute	"shapeProperties,textureSketch,textureDrawing"	button	computeTexture	n/a	on	computeTexture
 ViRMEn manual	Help	ViRMEn manual…	n/a	button	manual	n/a	on	help
 About ViRMEn	Help	About ViRMEn…	n/a	button	about	n/a	off	about

@@ -21,10 +21,9 @@ classdef shapeRegularPolygon < virmenShape
             yc = obj.radius*sind(theta(:));
             x = zeros(0,1);
             y = zeros(0,1);
-            loc = obj.locations;
             for ndx = 1:size(obj.locations,1)
-                x = [x; xc+loc(ndx,1); NaN]; %#ok<AGROW>
-                y = [y; yc+loc(ndx,2); NaN]; %#ok<AGROW>
+                x = [x; xc+obj.locations(ndx,1); NaN]; %#ok<AGROW>
+                y = [y; yc+obj.locations(ndx,2); NaN]; %#ok<AGROW>
             end
             x(end) = [];
             y(end) = [];

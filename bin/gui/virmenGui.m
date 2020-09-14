@@ -96,9 +96,6 @@ handles.bools = cellfun(@str2double,txt(2:end,4:end));
 handles.changedFigs = zeros(1,size(handles.bools,2));
 fclose(fid);
 
-% Create macros structure
-handles.macros = struct;
-
 mfile = mfilename('fullpath');
 path = fileparts(mfile);
 if ismac && ~exist('/usr/local/lib/libglfw.3.dylib','file')
@@ -119,14 +116,9 @@ if ismac && ~exist('/usr/local/lib/libglfw.3.dylib','file')
         end
     end
 end
-
-foldNames = {'defaults','experiments','macros','movements','objects','shapes','transformations'};
-for fNdx = 1:length(foldNames)
-    if ~exist([path filesep '..' filesep '..' filesep foldNames{fNdx}],'dir')
-        mkdir([path filesep '..' filesep '..' filesep foldNames{fNdx}]);
-    end
+if ~exist([path filesep '..' filesep '..' filesep 'defaults'],'dir')
+    mkdir([path filesep '..' filesep '..' filesep 'defaults']);
 end
-
 if ~exist([path filesep '..' filesep '..' filesep 'defaults' filesep 'defaultVirmenCode.m'],'file')
     myCopyFile([path filesep 'defaultVirmenCode.m'],[path filesep '..' filesep '..' filesep 'defaults' filesep 'defaultVirmenCode.m']);
 end
@@ -144,7 +136,7 @@ end
 mt = dir([path filesep '..' filesep 'gui' filesep 'builtinShapes' filesep 'shape*.*']);
 for ndx = 1:length(mt)
     toQuit = manageFile([path filesep '..' filesep 'gui' filesep 'builtinShapes' filesep mt(ndx).name], ...
-        [path filesep '..' filesep '..' filesep 'shapes' filesep mt(ndx).name]);
+        [path filesep '..' filesep '..' filesep 'shapes' filesep mt(ndx).name(1:end)]);
     if toQuit
         delete(guifig);
         return;
@@ -153,7 +145,7 @@ end
 mt = dir([path filesep '..' filesep 'gui' filesep 'builtinObjects' filesep 'object*.*']);
 for ndx = 1:length(mt)
     toQuit = manageFile([path filesep '..' filesep 'gui' filesep 'builtinObjects' filesep mt(ndx).name], ...
-        [path filesep '..' filesep '..' filesep 'objects' filesep mt(ndx).name]);
+        [path filesep '..' filesep '..' filesep 'objects' filesep mt(ndx).name(1:end)]);
     if toQuit
         delete(guifig);
         return;
@@ -162,7 +154,7 @@ end
 mt = dir([path filesep '..' filesep 'gui' filesep 'builtinTransformations' filesep 'transform*.*']);
 for ndx = 1:length(mt)
     toQuit = manageFile([path filesep '..' filesep 'gui' filesep 'builtinTransformations' filesep mt(ndx).name], ...
-        [path filesep '..' filesep '..' filesep 'transformations' filesep mt(ndx).name]);
+        [path filesep '..' filesep '..' filesep 'transformations' filesep mt(ndx).name(1:end)]);
     if toQuit
         delete(guifig);
         return;
@@ -171,7 +163,7 @@ end
 mt = dir([path filesep '..' filesep 'gui' filesep 'builtinMovements' filesep 'move*.*']);
 for ndx = 1:length(mt)
     toQuit = manageFile([path filesep '..' filesep 'gui' filesep 'builtinMovements' filesep mt(ndx).name], ...
-        [path filesep '..' filesep '..' filesep 'movements' filesep mt(ndx).name]);
+        [path filesep '..' filesep '..' filesep 'movements' filesep mt(ndx).name(1:end)]);
     if toQuit
         delete(guifig);
         return;
@@ -254,23 +246,13 @@ if ~exist(filename(1:end-8),'file')
     return
 end
     
-mtb = dir(builtin);
-mtf = dir(filename(1:end-8));
-if datenum(mtb.date) < datenum(mtf.date)
+%mtb = dir(builtin);
+%mtf = dir(filename(1:end-8));
+%if datenum(mtb.date) < datenum(mtf.date)
+if ~strcmp(fileread(builtin), fileread(filename(1:end-8)))
     [~, name, ~] = fileparts(filename);
-%     errordlg(['Built in function ''' name ''' has been modified. Please rename or delete the newer user version.'],'Error','modal');
-    button = questdlg(['Built-in function ''' name ''' has been modified. Choose action.'], ...
-        'Question','Keep both copies','Revert to built-in copy','Quit','Keep both copies');
-    switch button
-        case 'Keep both copies'
-            [path,file,ext] = fileparts(filename(1:end-8));
-            myCopyFile(builtin,[path filesep file '_new' ext]);
-            myCopyFile(builtin,filename(1:end-8));
-        case 'Revert to built-in copy'
-            myCopyFile(builtin,filename(1:end-8));
-        case 'Quit'
-            toQuit = true;
-    end
+    errordlg(['Built in function ''' name ''' has been modified. Please rename or delete the newer user version.'],'Error','modal');
+    toQuit = true;
 else
     myCopyFile(builtin,filename(1:end-8));
     return
@@ -339,7 +321,7 @@ end
 function pop_object_Callback(hObject, eventdata, handles)
 
 val = get(hObject,'value');
-virmenEventHandler('selectObject',{val-1,'none',1});
+virmenEventHandler('objectClick',{val-1,'none',1});
 
 
 % --- Executes during object creation, after setting all properties.
@@ -427,7 +409,7 @@ highlightFigure;
 function pop_shape_Callback(hObject, eventdata, handles)
 
 val = get(hObject,'value');
-virmenEventHandler('selectShape',{val,'none',1});
+virmenEventHandler('shapeClick',{val,'none',1});
 
 
 % --- Executes during object creation, after setting all properties.
@@ -440,7 +422,7 @@ end
 % --- Executes on button press in push_setShapeColor.
 function push_setShapeColor_Callback(hObject, eventdata, handles)
 
-virmenEventHandler('selectShape','n/a')
+virmenEventHandler('shapeClick','n/a')
 
 
 % --- Executes on button press in push_shapeSymbolic.

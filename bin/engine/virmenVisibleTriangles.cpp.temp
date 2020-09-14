@@ -1,0 +1,38 @@
+#include "mex.h"
+#include "cPointer.h"
+#include <stdio.h>
+#include "GLEW/glew.h"
+
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+    double *nDim, *nVert;
+    bool *isVisible;
+    mwSize *tria, nTria, index, d, nCoord;
+    
+    nTria = mxGetN(prhs[0]);
+    
+    tria = (mwSize*) mxGetData(prhs[0]);
+    nDim = mxGetPr(prhs[1]);
+    nVert = mxGetPr(prhs[2]);
+    isVisible = (bool*) mxGetData(prhs[3]);
+
+    const bool* vertexVisible = (const bool*) mxGetData(prhs[4]);
+    GLuint*  newTria = matToCPointer<GLuint>(prhs[5]);
+    
+    nCoord = nVert[0];
+    
+    for ( d = 0; d < nDim[0]; d++ ) {
+        for ( index = 0; index < nTria; index++ ) {
+            if (isVisible[index]==1 && (vertexVisible[nCoord*d+tria[3*index]+2] || vertexVisible[nCoord*d+tria[3*index+1]+2] || vertexVisible[nCoord*d+tria[3*index+2]+2])) {
+                newTria[3*nTria*d+3*index] = tria[3*index];
+                newTria[3*nTria*d+3*index+1] = tria[3*index+1];
+                newTria[3*nTria*d+3*index+2] = tria[3*index+2];
+            } else {
+                newTria[3*nTria*d+3*index] = 0;
+                newTria[3*nTria*d+3*index+1] = 0;
+                newTria[3*nTria*d+3*index+2] = 0;
+            }
+        }
+    }
+ 
+    return;
+}

@@ -73,9 +73,9 @@ classdef virmenTexture < virmenClass
             shape.parent = texture;
             texture.shapes{end+1} = shape;
             [points, segments] = getTextureSegments(texture); %#ok<NASGU>
-            loc = shape.locations;
             if ~strcmp(class(shape),'shapeColor')
-                for ndx = 1:size(shape.locations,1)
+                loc = shape.locations;
+                for ndx = 1:size(loc,1)
                     dst = sum(bsxfun(@minus,points,loc(ndx,:)).^2,2);
                     [dummy, f] = min(dst); %#ok<ASGLU>
                     f = f(1);

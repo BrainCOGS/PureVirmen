@@ -28,7 +28,7 @@ enginePath = pwd;
 cd ..;
 
 % get a cell array of all Virmen subdirectories
-cd ..;
+% cd ..;
 dirString = genpath(pwd);
 dirArray = regexp(dirString, pathsep, 'split');
 dirArray = dirArray(2:end-1);
@@ -51,8 +51,8 @@ for i = 1:length(dirArray)
         isGLFW=false; 
         for ndx = 1:5 
             str = fgetl(fid); 
-            if ~isempty(strfind(str,'GLFW')) 
-                isGLFW=true;
+            if ~isempty(strfind(str,'GLFW')) || ~isempty(strfind(str,'GLEW'))
+                isGLFW = true;
             end
         end
         fclose(fid);
@@ -60,7 +60,7 @@ for i = 1:length(dirArray)
         % compile the file
         if ~isGLFW
             disp(['Compiling ', f, ' without GLFW...']);
-            mex(f);
+            mex('-O', f);
         else
             disp(['Compiling ', f, ' with GLFW...']);
             % copy file to the engine directory to compile with GLFW,
@@ -75,11 +75,13 @@ for i = 1:length(dirArray)
                 try
                     % compile depending on architecture
                     if strcmp(computer, 'PCWIN')
-                        mex('-LGLFW_32','-lglfw3','-lopengl32','-outdir',currentDir,f);
+                        mex('-O', '-LGLFW_32','-lglfw3','-lopengl32','-LGLEW_32','-lglew32','-DWIN32','-outdir',currentDir,f);
+%                         mex('-O', '-LGLFW_32','-lglfw3','-lopengl32','-outdir',currentDir,f);
                     elseif strcmp(computer, 'PCWIN64')
-                        mex('-LGLFW','-lglfw3','-lopengl32','-outdir', currentDir, f);
+                        mex('-O', '-LGLFW_64','-lglfw3','-lopengl32','-LGLEW_64','-lglew64','-DWIN32','-outdir', currentDir, f);
+%                         mex('-O', '-LGLFW','-lglfw3','-lopengl32','-outdir', currentDir, f);
                     elseif strcmp(computer, 'MACI64') % '-Duint16_t=uint16_T',
-                        mex('-L./GLFW','-v','-lglfw.3','LDFLAGS="\$LDFLAGS','-framework','Cocoa','-framework','OpenGL','-framework','IOKit','-framework','CoreVideo"','-outdir',currentDir,f);
+                        mex('-O', '-L./GLFW','-v','-lglfw.3','LDFLAGS="\$LDFLAGS','-framework','Cocoa','-framework','OpenGL','-framework','IOKit','-framework','CoreVideo"','-outdir',currentDir,f);
                     else
                         if wasCopied == true
                             delete(f);

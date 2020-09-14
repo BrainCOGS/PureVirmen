@@ -55,12 +55,11 @@ classdef objectSphere < virmenObject
                 objSurface.vertices = [objSurface.vertices; bsxfun(@plus,pt,loc(ndx,:))];
             end
             
-            objSurface.vertices(:,3) = repmat((2*ynorm-1)*obj.radius+obj.elevation,size(loc,1),1);
-            objSurface.cdata = repmat(texture.triangles.cdata,size(loc,1),1);
+            objSurface.vertices(:,3) = repmat((2*ynorm-1)*obj.radius+obj.elevation,size(obj.locations,1),1);
+            objSurface.cdata = repmat(texture.triangles.cdata,size(obj.locations,1),1);
         end
         function edges = edges(obj)
-            loc = obj.locations;
-            edges = [loc loc];
+            edges = [obj.locations obj.locations];
         end
     end
 end

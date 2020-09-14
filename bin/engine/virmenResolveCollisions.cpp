@@ -221,13 +221,18 @@ bool detectCollision( const double*       pos
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-  //----- Parse arguments
+  //----- Input check
   if (nrhs != 8)
     mexErrMsgIdAndTxt ( "virmenResolveCollisions:arguments"
                       , "Invalid number of arguments %d != 8, syntax should be: [dp, collision] = virmenResolveCollisions(pos, dp, endpoints, radius2, angle, border1, border2, dpResolution)"
                       , nrhs
                       );
+  for (size_t iPar = 0; iPar < 8; ++iPar) {
+    if (mxGetClassID(prhs[iPar]) != mxDOUBLE_CLASS)
+      mexErrMsgIdAndTxt("virmenResolveCollisions:arguments", "Invalid data type for argument %d, must be of type double.", iPar + 1);
+  }
 
+  //----- Parse arguments
   const double*       inPos         = mxGetPr    (prhs[0]);
   const double*       inDP          = mxGetPr    (prhs[1]);
   const size_t        numWalls      = mxGetM     (prhs[2]);

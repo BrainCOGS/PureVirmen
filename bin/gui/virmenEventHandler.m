@@ -7,13 +7,13 @@ global guifig;
 currax = get(guifig,'currentaxes');
 
 switch type
-    case 'selectShape'
+    case 'shapeClick'
         %
-    case 'selectObject'
+    case 'objectClick'
         %
-    case 'zoomOnWorld'
+    case 'worldSketchClick'
         %
-    case 'zoomOnTexture'
+    case 'textureSketchClick'
         %
     otherwise
         set(guifig,'Pointer','watch');
@@ -32,12 +32,6 @@ sNum = handles.state.selectedShape;
 justSaved = false;
 
 handles.exper.updateCodeText;
-
-if handles.historyBool.(type)
-    undo.param = {};
-    redo.param = {};
-    oldState = handles.state;
-end
 
 switch type
     case 'changeView'
@@ -95,73 +89,6 @@ switch type
             end
         end
         set(guifig,'Pointer','arrow'); return
-    case 'runMacro'
-        try
-            if ~isfield(handles.macros,inp)
-                handles.macros.(inp) = eval(inp);
-            end
-            mcr = handles.macros.(inp);
-        
-            figs = fieldnames(handles.figNames);
-            for ndx = 1:length(figs)
-                handles.bools(handles.evtNames.('runMacro'),handles.figNames.(figs{ndx})) = mcr.(['update' upper(figs{ndx}(1)) figs{ndx}(2:end)]);
-            end
-            
-            if mcr.trackHistory
-                undo.param = {'runMacro',handles.exper,false};
-                exper = copyVirmenObject(handles.exper);
-                mcr.exper = exper;
-                mcr.guiState = handles.state;
-                mcr.run;
-                handles.state = mcr.guiState;
-                handles.exper = exper;
-                redo.param = {'runMacro',handles.exper,false};
-            else
-                undo.param = {'runMacro',handles.exper,true};
-                mcr.exper = handles.exper;
-                mcr.guiState = handles.state;
-                mcr.run;
-                handles.state = mcr.guiState;
-                redo.param = {'runMacro',handles.exper,true};
-            end
-            
-        catch err
-            errordlg(['Macro function ' err.stack(1).name ' generated an error on line ' num2str(err.stack(1).line) ': ' err.message],'Error');
-            set(guifig,'Pointer','arrow'); return
-        end
-
-    case 'changeMacroSettings'
-        try
-            if ~isfield(handles.macros,inp)
-                handles.macros.(inp) = eval(inp);
-            end
-            mcr = handles.macros.(inp);
-            
-            props = setdiff(properties(mcr),properties(virmenMacro));
-            propVal1 = struct;
-            for ndx = 1:length(props)
-                propVal1.(props{ndx}) = mcr.(props{ndx});
-            end
-            
-            mcr.exper = handles.exper;
-            mcr.guiState = handles.state;
-            mcr.settings;
-            
-            propVal2 = struct;
-            for ndx = 1:length(props)
-                propVal2.(props{ndx}) = mcr.(props{ndx});
-            end
-            if ~isequal(propVal1,propVal2)
-                undo.param = {'macroSettings',inp,propVal1};
-                redo.param = {'macroSettings',inp,propVal2};
-            else
-                set(guifig,'Pointer','arrow'); return
-            end
-        catch err
-            errordlg(['Macro function ' err.stack(1).name ' generated an error on line ' num2str(err.stack(1).line) ': ' err.message],'Error');
-            set(guifig,'Pointer','arrow'); return
-        end
-        
     case 'startProgram'
         [handles.figs, handles.buttons, handles.menus] = createFigures;
         handles.separated = setdiff(findall(guifig,'separator','on'),findall(guifig,'type','uimenu'));
@@ -171,7 +98,7 @@ switch type
         redo.param = {'startProgram'};
         
         set(guifig,'resizefcn','virmenEventHandler(''resizeFigure'',''n/a'')');
-    case 'selectShape'
+    case 'shapeClick'
         if ischar(inp)
             inp = {sNum, 'none', 1};
             str = 'color';
@@ -272,9 +199,7 @@ switch type
                     [~, virmenDragging.indx] = min(dst);
                 end
             case {'open','color'}
-                undo.param = {'GUIOperation',handles.state};
                 handles.state.selectedShape = inp{1};
-                redo.param = {'GUIOperation',handles.state};
                 if oNum == 0
                     errordlg('No color selected.','Error');
                     set(guifig,'Pointer','arrow'); return
@@ -425,7 +350,7 @@ switch type
             undo.param = undo.param{1};
             redo.param = redo.param{1};
         end
-    case 'changeTriangulationVisibility'
+    case 'showTriangulation'
         if strcmp(inp{1},'on')
             handles.state.showTriangulation = 1;
         elseif strcmp(inp{1},'off')
@@ -433,9 +358,9 @@ switch type
         else
             handles.state.showTriangulation = 1-handles.state.showTriangulation;
         end
-    case 'changeTriangulationColor'
+    case 'triangulationColor'
         handles.state.triangulationColor = uisetcolor(handles.state.triangulationColor);
-    case 'zoomOnTexture'
+    case 'textureSketchClick'
         switch get(guifig,'selectiontype')
             case 'normal'
                 set(guifig,'Pointer','custom','PointerShapeCdata',zoomPointer);
@@ -468,7 +393,7 @@ switch type
         
         handles.state.textureXLim = xl;
         handles.state.textureYLim = yl;
-    case 'zoomOnWorld'
+    case 'worldSketchClick'
         switch get(guifig,'selectiontype')
             case 'normal'
                 set(guifig,'Pointer','custom','PointerShapeCdata',zoomPointer);
@@ -508,7 +433,7 @@ switch type
         handles.state.worldXLim = xl;
         handles.state.worldYLim = yl;
         
-    case 'selectObject'
+    case 'objectClick'
         handles.state.selectedObject = inp{1};
         handles.state.selectedShape = 1;
         if strcmp(get(guifig,'selectiontype'),'normal') && handles.state.selectedObject > 0 && get(currax,'parent')==handles.worldSketch
@@ -1222,21 +1147,6 @@ switch type
         end
         for j = 1:size(historyAct.param,1)
             switch historyAct.param{j}{1}
-                case 'runMacro'
-                    exper = historyAct.param{j}{2};
-                    historyError = historyAct.param{j}{3};
-                    handles.exper = exper;
-                    if historyError
-                        errordlg(['Cannot ' inp ' because this macro has history tracking disabled.'],'Error');
-                        set(guifig,'Pointer','arrow'); return
-                    end
-                case 'macroSettings'
-                    macroType = historyAct.param{j}{2};
-                    propVal = historyAct.param{j}{3};
-                    props = fieldnames(propVal);
-                    for ndx = 1:length(props)
-                        handles.macros.(macroType).(props{ndx}) = propVal.(props{ndx});
-                    end
                 case 'addShape'
                     wNum = historyAct.param{j}{2};
                     oNum = historyAct.param{j}{3};
@@ -1317,13 +1227,8 @@ switch type
                         varb = historyAct.param{j}{2}{v};
                         handles.exper.variables = rmfield(handles.exper.variables,varb);
                     end
-                case 'renameVariables'
-                    for v = 1:length(historyAct.param{j}{2})
-                        handles.exper.renameVariable(historyAct.param{j}{3}{v},['temporary_' historyAct.param{j}{2}{v}]);
-                    end
-                    for v = 1:length(historyAct.param{j}{2})
-                        handles.exper.renameVariable(['temporary_' historyAct.param{j}{2}{v}],historyAct.param{j}{2}{v});
-                    end
+                case 'renameVariable'
+                    handles.exper.renameVariable(historyAct.param{j}{3},historyAct.param{j}{2});
                 case 'sortVariables'
                     ord = historyAct.param{j}{2};
                     handles.exper.variables = orderfields(handles.exper.variables,ord);
@@ -1351,7 +1256,7 @@ switch type
                 redo.param = {'changeProperty',[],inp{1},handles.exper.getValue.(inp{1})};
             end
         end
-    case 'selectWorld'
+    case 'clickWorld'
         if handles.state.selectedWorld ~= inp
             handles.state.selectedWorld = inp;
             handles.state.selectedObject = 0;
@@ -1460,7 +1365,7 @@ switch type
         for ndx = 1:length(val)
             handles.exper.variables = rmfield(handles.exper.variables,val{ndx});
         end
-    case 'renameVariables'
+    case 'renameVariable'
         data = get(handles.table_variables,'data');
         if isempty(data)
             errordlg('No variables exist.','Error')
@@ -1473,11 +1378,12 @@ switch type
             set(guifig,'Pointer','arrow'); return
         end
         val = row(indx);
-        query = cell(1,length(val));
-        for v = 1:length(query)
-            query{v} = ['New name for ' val{v}];
+        if length(val)>1
+            errordlg('Select only one variable.','Error')
+            set(guifig,'Pointer','arrow'); return
         end
-        answer = inputdlg(query,'Rename variables',1,val);
+        val = val{1};
+        answer = inputdlg({['New variable name for ' val]},'Rename variable',1,{''});
         if isempty(answer)
             set(guifig,'Pointer','arrow'); return
         end
@@ -1485,14 +1391,9 @@ switch type
             errordlg([answer{1} ' is not a valid variable name.'],'Error');
             set(guifig,'Pointer','arrow'); return
         end
-        undo.param = {'renameVariables',val,answer};
-        redo.param = {'renameVariables',answer,val};
-        for v = 1:length(query)
-            handles.exper.renameVariable(val{v},['temporary_' answer{v}]);
-        end
-        for v = 1:length(query)
-            handles.exper.renameVariable(['temporary_' answer{v}],answer{v});
-        end
+        undo.param = {'renameVariable',val,answer{1}};
+        redo.param = {'renameVariable',answer{1},val};
+        handles.exper.renameVariable(val,answer{1});
     case 'sortVariables'
         fld = fieldnames(handles.exper.variables);
         if length(fld)<2
@@ -1562,7 +1463,6 @@ switch type
             set(guifig,'Pointer','arrow'); return
         end
         undo.param = {'changeProperty',[wNum oNum],'texture',copyVirmenObject(handles.exper.worlds{wNum}.objects{oNum}.texture)};
-        handles.exper.worlds{wNum}.objects{oNum}.tiling = [1 1];
         handles.exper.worlds{wNum}.objects{oNum}.texture.loadImage(img);
         if handles.state.selectedShape > length(handles.exper.worlds{wNum}.objects{oNum}.texture.shapes)
             handles.state.selectedShape = length(handles.exper.worlds{wNum}.objects{oNum}.texture.shapes);
@@ -1755,7 +1655,7 @@ end
 
 f = handles.buttons.(makeVar('Save experiment'));
 
-if handles.historyBool.(type) && ~(isempty(undo.param) && isequal(oldState,handles.state))
+if handles.historyBool.(type)
     undo.string = label2string(type);
     redo.string = undo.string;
     
@@ -1832,8 +1732,6 @@ if ~isempty(f)
     f = f(1);
     if strcmp(str(f-1),'e')
         str = [str(1:f-2) 'ing' str(f:end)];
-    elseif strcmp(str(f-1),'n')
-        str = [str(1:f-1) 'ning' str(f:end)];
     else
         str = [str(1:f-1) 'ing' str(f:end)];
     end

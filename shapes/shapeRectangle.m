@@ -25,13 +25,12 @@ classdef shapeRectangle < virmenShape
             end
         end
         function [x y] = coords2D(obj)
-            loc = obj.locations;
-            if size(loc,1) < 2
-                x = loc([1 1 1 1 1]',1);
-                y = loc([1 1 1 1 1]',2);
+            if size(obj.locations,1) < 2
+                x = obj.locations([1 1 1 1 1]',1);
+                y = obj.locations([1 1 1 1 1]',2);
             else
-                x = loc([1 1 2 2 1]',1);
-                y = loc([1 2 2 1 1]',2);
+                x = obj.locations([1 1 2 2 1]',1);
+                y = obj.locations([1 2 2 1 1]',2);
             end
         end
     end

@@ -1,6 +1,7 @@
 function vrWorld = loadVirmenWorld(world)
 
 vrWorld = virmenWorldPrimitives;
+vrWorld.changed = true;
 
 [objSurface, objVertices, objTriangles] = world.coords3D;
 vrWorld.surface.vertices = objSurface.vertices';

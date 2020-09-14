@@ -21,15 +21,14 @@ classdef objectVerticalCone < virmenObject
             zlist = linspace(obj.bottom,obj.top,5);
             thlist = linspace(0,2*pi,8);
             thlist(end) = [];
-            loc = obj.locations;
             for zs = zlist
-                for ndx = 1:size(loc,1)
-                    x = [x; ((zs-obj.bottom)/(obj.top-obj.bottom)*(obj.topRadius-obj.bottomRadius)+obj.bottomRadius)*cos(theta)+loc(ndx,1); NaN]; %#ok<AGROW>
-                    y = [y; ((zs-obj.bottom)/(obj.top-obj.bottom)*(obj.topRadius-obj.bottomRadius)+obj.bottomRadius)*sin(theta)+loc(ndx,2); NaN]; %#ok<AGROW>
+                for ndx = 1:size(obj.locations,1)
+                    x = [x; ((zs-obj.bottom)/(obj.top-obj.bottom)*(obj.topRadius-obj.bottomRadius)+obj.bottomRadius)*cos(theta)+obj.locations(ndx,1); NaN]; %#ok<AGROW>
+                    y = [y; ((zs-obj.bottom)/(obj.top-obj.bottom)*(obj.topRadius-obj.bottomRadius)+obj.bottomRadius)*sin(theta)+obj.locations(ndx,2); NaN]; %#ok<AGROW>
                     z = [z; zs*ones(size(theta)); NaN]; %#ok<AGROW>
                     for th = thlist
-                        x = [x; obj.bottomRadius*cos(th)+loc(ndx,1); obj.topRadius*cos(th)+loc(ndx,1); NaN]; %#ok<AGROW>
-                        y = [y; obj.bottomRadius*sin(th)+loc(ndx,2); obj.topRadius*sin(th)+loc(ndx,2); NaN]; %#ok<AGROW>
+                        x = [x; obj.bottomRadius*cos(th)+obj.locations(ndx,1); obj.topRadius*cos(th)+obj.locations(ndx,1); NaN]; %#ok<AGROW>
+                        y = [y; obj.bottomRadius*sin(th)+obj.locations(ndx,2); obj.topRadius*sin(th)+obj.locations(ndx,2); NaN]; %#ok<AGROW>
                         z = [z; obj.bottom; obj.top; NaN]; %#ok<AGROW>
                     end
                 end
@@ -46,18 +45,17 @@ classdef objectVerticalCone < virmenObject
             
             objSurface.vertices = zeros(0,2);
             objSurface.triangulation = zeros(0,3);
-            loc = obj.locations;
-            for ndx = 1:size(loc,1)
+            for ndx = 1:size(obj.locations,1)
                 objSurface.triangulation = [objSurface.triangulation; texture.triangles.triangulation+size(objSurface.vertices,1)];
+                loc = obj.locations;
                 objSurface.vertices = [objSurface.vertices; bsxfun(@plus,pt,loc(ndx,:))];
             end
             
-            objSurface.vertices(:,3) = repmat(ynorm*(obj.top-obj.bottom)+obj.bottom,size(loc,1),1);
-            objSurface.cdata = repmat(texture.triangles.cdata,size(loc,1),1);
+            objSurface.vertices(:,3) = repmat(ynorm*(obj.top-obj.bottom)+obj.bottom,size(obj.locations,1),1);
+            objSurface.cdata = repmat(texture.triangles.cdata,size(obj.locations,1),1);
         end
         function edges = edges(obj)
-            loc = obj.locations;
-            edges = [loc loc];
+            edges = [obj.locations obj.locations];
         end
     end
 end

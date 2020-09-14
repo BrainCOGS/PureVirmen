@@ -23,10 +23,10 @@ uparrow		worldDrawing	rotateView	up
 downarrow		worldDrawing	rotateView	down
 return		worldSketch	builtinLayout	texture
 return		worldsMenu	builtinLayout	world
-return		textureSketch	selectShape	n/a
+return		textureSketch	shapeClick	n/a
 =	control		computeTexture	n/a
 c	control		addShape	shapeColor
 f	control		refineTexture	n/a
 h	control		manual	n/a
 i	control	worldDrawing	switchWireframe	n/a
-g	control		changeTriangulationVisibility	n/a
+g	control		showTriangulation	n/a

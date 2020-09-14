@@ -122,8 +122,7 @@ for ndx = 1:size(txt,1)
                 set(m,'separator',get(hm,'separator'));
             end
             for mndx = 1:length(h)
-                uimenu(m,'Label',lst(mndx).name,'callback',['virmenEventHandler(''' lst(mndx).callback ''',''' lst(mndx).callbackArgument ''');'], ...
-                    'accelerator',lst(mndx).shortcut,'userdata','n/a');
+                uimenu(m,'Label',lst(mndx).name,'callback',['virmenEventHandler(''' lst(mndx).callback ''',''' lst(mndx).callbackArgument ''');'],'userdata','n/a');
             end
             
             buttons.(makeVar(row{colm.ToolTip})) = hm;

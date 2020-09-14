@@ -27,8 +27,8 @@ classdef objectVerticalCylinder < virmenObject
             z = zeros(0,1);
             zlist = linspace(obj.bottom,obj.top,5);
             thlist = linspace(obj.startAngle,st,8);
-            loc = obj.locations;
             for zs = zlist
+                loc = obj.locations;
                 for ndx = 1:size(loc,1)
                     x = [x; xs+loc(ndx,1); NaN]; %#ok<AGROW>
                     y = [y; ys+loc(ndx,2); NaN]; %#ok<AGROW>
@@ -64,11 +64,12 @@ classdef objectVerticalCylinder < virmenObject
             end
             
             y = texture.triangles.vertices(:,2);
-            objSurface.vertices(:,3) = repmat((y-min(y(:)))/range(y(:))*(obj.top-obj.bottom)+obj.bottom,size(obj.locations,1),1);
-            objSurface.cdata = repmat(texture.triangles.cdata,size(obj.locations,1),1);
+            objSurface.vertices(:,3) = repmat((y-min(y(:)))/range(y(:))*(obj.top-obj.bottom)+obj.bottom,size(loc,1),1);
+            objSurface.cdata = repmat(texture.triangles.cdata,size(loc,1),1);
         end
         function edges = edges(obj)
-            edges = [obj.locations obj.locations];
+            loc = obj.locations;
+            edges = [loc loc];
         end
     end
 end

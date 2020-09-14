@@ -1,6 +1,6 @@
 function tiled = tileTexture(textureToTile,tiling)
 
-tiling = round(tiling);
+tiling = max(1, round(tiling));
 
 texture = struct;
 props = properties(textureToTile);

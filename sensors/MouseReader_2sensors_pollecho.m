@@ -1,0 +1,222 @@
+%% Interface between the Arduino microcontroller with two optical sensors and Matlab. 
+%
+% This class reads the data sent from the Arduino asynchronously over a USB serial protocol. The
+% Arduino continuously routes information from the optical sensor to the serial port.
+% MouseReader_2sensors accumulates data from the serial port into its internal buffer. When
+% get_xy_change() is called on the object, the values in the buffer are returned and the buffer is
+% cleared.
+%
+% This version reads from two sensors, front and bottom in that order. For logging purposes, the
+% last values that get_xy_change() has returned to the user are stored in the last_displacement
+% class property.
+%
+classdef MouseReader_2sensors_pollecho < handle
+
+	% constants
+	properties (Access = private, Constant = true)
+
+		% serial port parameters
+		BAUD_RATE = 250000; % speed (bits/s)
+		DATA_BITS = 8; % number of data bits
+		STOP_BITS = 1; % number of stop bits
+		PARITY = 'none'; % parity
+		TIMEOUT = 1; % serial read/write times out after this long (s)
+
+		% mouse readout protocol parametes
+		REQ_CHAR = 'm'; % request character
+		% send this character to request mouse displacement
+		TERMINATOR = 'LF'; % terminator character
+		% 'LF' == line feed (i.e. newline)
+		FORMAT_STR = '%d;%d;%d;%d;%d;%d'; % format string for strread()
+			% used for parsing mouse displacement replies from microcontroller
+		% mouse displacement reported as string:
+		% <delta_x><separator><delta_y><terminator>
+
+	end % constants
+
+
+	properties (Access = private)
+
+		% change in mouse x/y position since get_xy_change() last called
+    % units are mouse sensor 'dots'
+		delta_x = 0;
+		delta_y = 0;
+		delta_x2 = 0;
+		delta_y2 = 0;
+
+ 		% serial port object
+		serial_port;
+    
+	end % properties
+
+	properties (SetAccess = protected)
+
+    % last values that get_xy_change() has returned to the user
+		last_displacement = [0, 0, 0, 0];
+
+    % timing information
+    num_polls = 0;
+    num_callbacks = 0;
+    num_responses = 0;
+    arduino_responses = 0;
+    tic_index = 0;
+    toc_index = 0;
+    last_poll_tic = zeros(1,1,'uint64');
+    last_response_poll = 0;
+    last_response_toc = nan;
+    last_response_numpolls = nan;
+    
+    failed_response = 0;
+    failed_str = '';
+
+	end % properties
+
+    
+	methods
+
+		% constructor
+		function [ obj ] = MouseReader_2sensors_pollecho( port_name )
+
+			% delta_x/y already initialized to 0
+
+			% create serial port object
+			obj.serial_port = serial(port_name);
+			obj.serial_port.BaudRate = obj.BAUD_RATE;
+			obj.serial_port.Terminator = obj.TERMINATOR;
+			obj.serial_port.DataBits = obj.DATA_BITS;
+			obj.serial_port.StopBits = obj.STOP_BITS;
+			obj.serial_port.Parity = obj.PARITY;
+			obj.serial_port.Timeout = obj.TIMEOUT;
+
+			% use continuous mode for asynchronous reads. continuously reads
+			% any serial input into buffer (should already be set by default)
+			obj.serial_port.ReadAsyncMode = 'continuous';
+
+			% setup callback function to handle microcontroller replies to
+			% polling requests
+			obj.serial_port.BytesAvailableFcnMode = 'terminator';
+			obj.serial_port.BytesAvailableFcn = ... @obj.update_delta_xy;
+				@(cb_obj, cb_event) obj.update_delta_xy();
+			% obj.update_delta_xy() will be called whenever terminator
+			% character is detected in input buffer
+			
+			% adding this callback creates a reference to obj. when obj
+			% goes out of scope, this reference continues to exist, so
+			% obj's destructor will never be called automatically. must
+			% call it manually.
+
+			% open serial port
+			fopen(obj.serial_port);
+			pause(0.5);
+		end % constructor
+
+
+		% destructor
+		function [] = delete( obj )
+			try % catch all exceptions
+        % stop asynchronous reads/writes
+        stopasync(obj.serial_port);
+        % close and delete serial port object
+				fclose(obj.serial_port);
+				delete(obj.serial_port);
+			end
+		end % destructor
+
+		
+		% send polling request to microcontroller
+    % reply will be handled by serial input callback function
+    % this function doesn't return anything or change object state
+		function [] = poll_mouse( obj )
+            %fprintf('poll \t');
+            % try sending polling request character to microcontroller
+            try
+                % keep track of the number of poll requests
+                obj.num_polls = obj.num_polls + 1;
+                % if we have successfully recorded the response lag from
+                % the last recorded tic, we can start the next tic
+                if obj.last_response_poll >= obj.tic_index
+                  obj.tic_index = obj.num_polls;
+                  obj.last_poll_tic = tic;
+                end
+                % fprintf(obj.serial_port, '%c', obj.REQ_CHAR, 'async');
+                fprintf(obj.serial_port, '%s\n', [obj.REQ_CHAR, int2str(obj.num_polls)], 'async');
+            catch exception
+                % do nothing if we haven't finished sending the
+                % previous request
+                if strcmp( ...
+                    exception.identifier, ...
+                    'MATLAB:serial:fprintf:opfailed' ...
+                )
+                else
+                    rethrow(exception);
+                end
+            end
+        end % poll_mouse()
+
+        
+    % returns the change in mouse x/y position
+    % since this function was last called
+		function [ delta_x, delta_y, delta_x2, delta_y2 ] = get_xy_change( obj )
+      delta_x = obj.delta_x;
+      delta_y = obj.delta_y;
+      delta_x2 = obj.delta_x2;
+      delta_y2 = obj.delta_y2;
+			obj.last_displacement = [delta_x, delta_y, delta_x2, delta_y2];
+
+			obj.delta_x = 0;
+			obj.delta_y = 0;
+			obj.delta_x2 = 0;
+			obj.delta_y2 = 0;
+end % get_xy_change
+
+	end % public methods
+    
+    
+  methods (Access = private)
+
+      % update mouse displacement values
+  % called automatically by callback function when terminator character
+  % detected in serial input (i.e. microncontroller reply to polling
+      % request has been received)
+  function [] = update_delta_xy( obj )
+
+    % read input string (up to terminator character) from serial
+    % input buffer
+    obj.num_callbacks = obj.num_callbacks + 1;
+    str = fscanf(obj.serial_port);
+
+    % parse input string
+    % add reported x/y displacement to current displacement values
+    % leave displacement values alone if anything unexpected happens
+    try
+      [my_delta_x, my_delta_y, my_delta_x2, my_delta_y2, my_poll_count, my_poll_index] = strread(str, obj.FORMAT_STR);
+      if ~isempty(my_delta_x) && ~isempty(my_delta_y);
+        obj.delta_x = obj.delta_x + my_delta_x;
+        obj.delta_y = obj.delta_y + my_delta_y;
+        obj.delta_x2 = obj.delta_x2 + my_delta_x2;
+        obj.delta_y2 = obj.delta_y2 + my_delta_y2;
+      end
+      
+      % keep track of the number of responses
+      obj.arduino_responses = my_poll_count;
+      obj.num_responses = obj.num_responses + 1;
+      obj.last_response_poll = my_poll_index;
+      % if the response for the poll request corresponding to the last
+      % stored tic has arrived, record the time taken
+      if my_poll_index == obj.tic_index
+        obj.last_response_toc = toc(obj.last_poll_tic);
+        obj.toc_index = my_poll_index;
+        obj.last_response_numpolls = obj.num_polls - my_poll_index;
+      end
+      
+    catch err
+      my_poll_index = regexp('0;;0;0;1190;1214', ';([0-9]+)$', 'tokens', 'once');
+      obj.failed_response = str2double(my_poll_index{:});
+      obj.failed_str = str;
+      disp(str)
+    end
+  end % update_delta_xy()
+
+  end % private methods
+
+end % classdef

@@ -87,8 +87,7 @@ classdef objectTorus < virmenObject
             objSurface.cdata = repmat(texture.triangles.cdata,size(loc,1),1);
         end
         function edges = edges(obj)
-            loc = obj.locations;
-            edges = [loc loc];
+            edges = [obj.locations obj.locations];
         end
     end
 end

@@ -63,7 +63,7 @@ if strcmp(get(handles.figs.textureSketch,'visible'),'on') && handles.bools(handl
         set(h(sNum),'markersize',10,'color','r');
         set(ax,'children',[h(sNum) h([1:sNum-1 sNum+1:end])]);
         for ndx = 1:length(h)
-            set(h(ndx),'buttondownfcn',['virmenEventHandler(''selectShape'',{' num2str(ndx) ',''' get(h(ndx),'marker') ''',' num2str(get(h(ndx),'markersize')) '});']);
+            set(h(ndx),'buttondownfcn',['virmenEventHandler(''shapeClick'',{' num2str(ndx) ',''' get(h(ndx),'marker') ''',' num2str(get(h(ndx),'markersize')) '});']);
         end
         
         if isempty(handles.state.textureXLim)
@@ -87,7 +87,7 @@ if strcmp(get(handles.figs.textureSketch,'visible'),'on') && handles.bools(handl
         set(ax,'xlim',xl);
         set(ax,'ylim',yl);
         
-        set(ax,'buttondownfcn','virmenEventHandler(''zoomOnTexture'',[]);');
+        set(ax,'buttondownfcn','virmenEventHandler(''textureSketchClick'',[]);');
     end
 end
 
@@ -119,7 +119,7 @@ if strcmp(get(handles.figs.textureDrawing,'visible'),'on') && handles.bools(hand
             set(h,'edgecolor',handles.state.triangulationColor);
         end
         
-        set([ax h],'buttondownfcn','virmenEventHandler(''zoomOnTexture'',[]);');
+        set([ax h],'buttondownfcn','virmenEventHandler(''textureSketchClick'',[]);');
         num = length(find(~isnan(texture.triangles.cdata(texture.triangles.triangulation(:,1),1))));
         set(handles.figs.textureDrawing,'title',['Drawing of ' handles.exper.worlds{wNum}.objects{oNum}.texture.indexedName ' for ' handles.exper.worlds{wNum}.objects{oNum}.indexedName ': ' num2str(num) ' visible triangles']);
         
@@ -162,7 +162,7 @@ if strcmp(get(handles.figs.worldSketch,'visible'),'on') && handles.bools(handles
     end
     world = handles.exper.worlds{wNum};
     
-    if strcmp(type,'selectObject')
+    if strcmp(type,'objectClick')
         ud = get(ax,'userdata');
         h = ud{1};
         he = ud{2};
@@ -181,10 +181,10 @@ if strcmp(get(handles.figs.worldSketch,'visible'),'on') && handles.bools(handles
         end
         set(hp,'zdata',zeros(size(get(hp,'zdata'))));
         for ndx = 1:length(h)
-            set(h(ndx),'buttondownfcn',['virmenEventHandler(''selectObject'',{' num2str(ndx) ',''' get(h(ndx),'marker') ''',' num2str(get(h(ndx),'markersize')) '});']);
-            set(he(ndx),'buttondownfcn',['virmenEventHandler(''selectObject'',{' num2str(ndx) ',''' get(he(ndx),'marker') ''',' num2str(get(he(ndx),'markersize')) '});']);
+            set(h(ndx),'buttondownfcn',['virmenEventHandler(''objectClick'',{' num2str(ndx) ',''' get(h(ndx),'marker') ''',' num2str(get(h(ndx),'markersize')) '});']);
+            set(he(ndx),'buttondownfcn',['virmenEventHandler(''objectClick'',{' num2str(ndx) ',''' get(he(ndx),'marker') ''',' num2str(get(he(ndx),'markersize')) '});']);
         end
-        set(hp,'buttondownfcn','virmenEventHandler(''selectObject'',{0,''none'',1});');
+        set(hp,'buttondownfcn','virmenEventHandler(''objectClick'',{0,''none'',1});');
     end
     
     set([h he hp],'color','k');
@@ -212,7 +212,7 @@ if strcmp(get(handles.figs.worldSketch,'visible'),'on') && handles.bools(handles
     set(ax,'xlim',xl);
     set(ax,'ylim',yl);
     
-    set(ax,'buttondownfcn','virmenEventHandler(''zoomOnWorld'',[]);');
+    set(ax,'buttondownfcn','virmenEventHandler(''worldSketchClick'',[]);');
 end
 
 % WORLDDRAWING
@@ -256,7 +256,7 @@ if (strcmp(get(handles.figs.worldDrawing,'visible'),'on') && ...
     
     world = handles.exper.worlds{wNum};
     
-    if strcmp(type,'selectObject')
+    if strcmp(type,'objectClick')
         h = get(ax,'userdata');
     else
         cla(ax)
@@ -271,7 +271,7 @@ if (strcmp(get(handles.figs.worldDrawing,'visible'),'on') && ...
         set(ax,'view',v,'userdata',h);
         
         for ndx = 1:length(h)
-            set(h(ndx),'buttondownfcn',['virmenEventHandler(''selectObject'',{' num2str(ndx) ',''' get(h(ndx),'marker') ''',' num2str(get(h(ndx),'markersize')) '});']);
+            set(h(ndx),'buttondownfcn',['virmenEventHandler(''objectClick'',{' num2str(ndx) ',''' get(h(ndx),'marker') ''',' num2str(get(h(ndx),'markersize')) '});']);
         end
     end
     
@@ -543,7 +543,6 @@ if strcmp(get(handles.figs.worldsMenu,'visible'),'on') && handles.bools(handles.
                 if ~isempty(h)
                     delete([he hp]);
                     he = [];
-                    hp = [];
                 end
                 
                 axis(ax,'tight');
@@ -559,8 +558,8 @@ if strcmp(get(handles.figs.worldsMenu,'visible'),'on') && handles.bools(handles.
                 set(xl,'string','Edit');
                 set(xl,'backgroundcolor',[0.552941176470588   0.694117647058824   0.674509803921569]);
                 set(ax,'xtick',[],'ytick',[],'ztick',[],'box','off');
-                set(ax,'buttondownfcn',['virmenEventHandler(''selectWorld'',' num2str(ndx) ');'])
-                set([h he hp],'buttondownfcn',['virmenEventHandler(''selectWorld'',' num2str(ndx) ');'])
+                set(ax,'buttondownfcn',['virmenEventHandler(''clickWorld'',' num2str(ndx) ');'])
+                set([h he],'buttondownfcn',['virmenEventHandler(''clickWorld'',' num2str(ndx) ');'])
                 set(tt,'buttondownfcn',['virmenEventHandler(''renameWorld'',' num2str(ndx) ');'],'interpreter','none')
                 set(xl,'buttondownfcn',['virmenEventHandler(''editWorld'',' num2str(ndx) ');'])
                 
