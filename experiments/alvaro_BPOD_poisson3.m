@@ -28,12 +28,11 @@ function vr = initializationCodeFun(vr)
      fclose(openInstr);
   end
   
-  vr.tcp_client = tcpip('192.168.0.22', 30000, 'NetworkRole', 'client');
-  vr.tcp_client.OutputBufferSize = 40;
-  fopen(vr.tcp_client);
-  if vr.tcp_client.BytesAvailable > 0
-      flush_data = fread(vr.tcp_client, vr.tcp_client.BytesAvailable);
-  end
+  vr.tcp_client = comm.initialize_tcp( ...
+      RigParameters.ipAddressBControl, ...
+      RigParameters.tcpClientPort, ...
+      RigParameters.outputBufferSize);
+  
           
   vr.exper.userdata.trainee = communicate_trainee(vr.tcp_client);
   
@@ -976,72 +975,6 @@ function [vr, nonTrivial] = drawCueSequence(vr)
   vr.pos_turnCue            = repmat(cueDisplacement, 1, size(vr.vtx_turnCue,2), 1);
   vr.worlds{vr.currentWorld}.surface.vertices(2,vr.vtx_turnCue) ...
                             = vr.template_turnCue(:) + vr.pos_turnCue(:);
-end
-
-function struct_data = communicate_data(tcp_client)
-
-  raw_data = uint8(1);
-  fwrite(tcp_client, 255);
-  %tcp_client.InputBufferSize = 1;
-  while (tcp_client.BytesAvailable == 0)
-  end
-  ack = fread(tcp_client, tcp_client.BytesAvailable);
-  if ack ~= 65
-      error('Acknowledge not recieved')
-  end
-  comm_protocol = 1;
-  while comm_protocol
-      %tcp_client.InputBufferSize = 2;
-      while (tcp_client.BytesAvailable < 2)
-      end
-      bytes_read = fread(tcp_client, 2);
-      bytes_read = double(typecast(uint8(bytes_read),'uint16'));
-      if bytes_read ~= 0
-        %tcp_client.InputBufferSize = bytes_read;
-        while (tcp_client.BytesAvailable < bytes_read)
-        end
-        bytes_protocol = uint8(fread(tcp_client, bytes_read));
-        raw_data = [raw_data; bytes_protocol];
-      else
-        comm_protocol = 0;
-      end
-  end
-      
-  raw_data = raw_data(2:end);
-  delete('raw_data.mat');
-  protocol_file = fopen('raw_data.mat', 'w');
-  fwrite(protocol_file, raw_data);
-  fclose(protocol_file);
-  
-  struct_data = load('raw_data.mat');
-
-end
-
-function trainee  = communicate_trainee(tcp_client)
-
-struct_data = communicate_data(tcp_client);
-
-trainee = struct();
-fields = fieldnames(struct_data.trainee_struct);
-for i=1:length(fields)
-    trainee.(fields{i}) = ...
-        struct_data.trainee_struct.(fields{i});
-end
-
-end
-
-function [mazes, criteria, globalSettings, vr] = communicate_protocol(vr, tcp_client)
-
-  struct_data = communicate_data(tcp_client);
-  mazes = struct_data.mazes;
-  criteria = struct_data.criteria;
-  globalSettings = struct_data.globalSettings;
-  
-  vr.stimulusGenerator = struct_data.stimulusGenerator;
-  vr.stimulusParameters = struct_data.stimulusParameters;
-  vr.inheritedVariables = struct_data.inheritedVariables;
-  vr.numMazesInProtocol = struct_data.numMazesInProtocol;
-  
 end
 
 %%_________________________________________________________________________
