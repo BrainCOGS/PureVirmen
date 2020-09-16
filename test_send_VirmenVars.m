@@ -17,6 +17,13 @@ code_files = ...
       RigParameters.tcpClientPort, ...
       'server', ...
       0);
+
   
-comm.virmen_specific.send_all_virmen_vars(tcp_client, codes_files, virmen_structure);
+try  
+    comm.virmen_specific.send_all_virmen_vars(tcp_client, codes_files, virmen_structure);
+    fclose(tcp_client);
+catch ME
+    ME
+    fclose(tcp_client);
+end  
 

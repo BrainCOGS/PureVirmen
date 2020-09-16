@@ -6,5 +6,11 @@
       40);
   
   
-virmen_structures = comm.virmen_specific.get_all_virmen_vars(tcp_client, codes_files, virmen_structure);
-
+try  
+    virmen_structures = comm.virmen_specific.get_all_virmen_vars(tcp_client, codes_files, virmen_structure);
+    fclose(tcp_client);
+catch ME
+    ME
+    fclose(tcp_client);
+end
+    
