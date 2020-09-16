@@ -8,6 +8,16 @@ virmen_structure.protocol_file = virmen_utils.struct2binary(protocol);
 trainee = virmen_utils.get_test_trainee_Virmen();
 virmen_structure.trainee_file = virmen_utils.struct2binary(trainee);
 
+command_dict = ...
+    comm.virmen_specific.generate_command_dictionary_poisson_towers();
+virmen_structure.command_dict = virmen_utils.struct2binary(command_dict);
+
+signal_dict = ...
+    comm.virmen_specific.generate_signal_dictionary_poisson_towers();
+virmen_structure.signal_dict = virmen_utils.struct2binary(signal_dict);
+
+
+
 codes_files = ...
     comm.virmen_specific.generate_send_codes_struct( virmen_structure );
 
