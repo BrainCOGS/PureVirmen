@@ -1,4 +1,4 @@
-function [tcp_client] = initialize_tcp(ipadress, port, outputbuffersize, role)
+function [tcp_client] = initialize_tcp(ipadress, port, role, outputbuffersize)
 % Initialize tcpip as a client of Bcontrol computer
 %
 % Inputs
