@@ -8,11 +8,11 @@ virmen_structure.protocol_file = virmen_utils.struct2binary(protocol);
 trainee = virmen_utils.get_test_trainee_Virmen();
 virmen_structure.trainee_file = virmen_utils.struct2binary(trainee);
 
-code_files = ...
+codes_files = ...
     comm.virmen_specific.generate_send_codes_struct( virmen_structure );
 
 
-  vr.tcp_client = comm.tcp.initialize_tcp( ...
+  tcp_client = comm.tcp.initialize_tcp( ...
       '192.168.0.23', ...
       RigParameters.tcpClientPort, ...
       'server', ...
@@ -24,6 +24,9 @@ try
     fclose(tcp_client);
 catch ME
     ME
+    for i=1:length(ME.stack)
+        ME.stack(i)
+    end
     fclose(tcp_client);
 end  
 

@@ -7,10 +7,10 @@ function send_binary_mat_file(tcp_client, binary_file)
 
 
 %Check if server is connected and acknowledge is sent
-comm.tcp.set_acknowledge_comm(tcp_client);
+comm.tcp.send_acknowledge_comm(tcp_client);
 
 %Check how many packages are to sent
-pack_no = ceil((length(binary_var)) / eth_port.OutputBufferSize);
+pack_no = ceil((length(binary_file)) / eth_port.OutputBufferSize);
 pause(0.05);
 
 for i=1:pack_no
