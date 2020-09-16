@@ -31,6 +31,10 @@ codes = 1:length(virmen_states);
 signal_dictionary.virmen_dict   = containers.Map(virmen_states,codes);
 signal_dictionary.bcontrol_dict = containers.Map(codes,virmen_states);
 
+codes_cell = num2cell(codes);
+signal_dictionary.struct_format   = cell2struct(codes_cell,virmen_states(:),2);
+
+
     
 end
 

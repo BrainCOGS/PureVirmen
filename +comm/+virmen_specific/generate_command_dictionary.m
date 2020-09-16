@@ -32,5 +32,9 @@ command_dictionary.bcontrol_dict   = containers.Map(bcontrol_commands,codes);
 command_dictionary.virmen_dict     = containers.Map(codes,bcontrol_commands);
 
     
+codes_cell = num2cell(codes);
+command_dictionary.struct_format   = cell2struct(codes_cell,bcontrol_commands(:),2);
+
+
 end
 
