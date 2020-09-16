@@ -4,7 +4,12 @@ function send_acknowledge_comm( tcp_client )
 % Input
 % tcp_client   = tcpip handle for communication
 
+tic
 while(tcp_client.BytesAvailable == 0 )
+    time_ellapsed = toc;
+    if time_ellapsed > 60
+        warning('No response from tcpip server ')
+    end
 end
 event = fread(tcp_client, tcp_client.BytesAvailable);
 if event ~= 255

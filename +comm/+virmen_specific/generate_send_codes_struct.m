@@ -19,10 +19,11 @@ function [ codes_files ] = generate_send_codes_struct( virmen_structure )
 codes_files = struct();
 %Get all fields from structure
 fields2send = fieldnames(virmen_structure);
+fields2send = [{'no_file'}; fields2send];
 
 % Fill code_files
-for i=1:length(fields2send)   
-    codes_files.(fields2send{i}) = i;
+for i=0:length(fields2send)-1   
+    codes_files.(fields2send{i+1}) = i;
 end
 
 end

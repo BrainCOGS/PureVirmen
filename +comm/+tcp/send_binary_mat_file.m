@@ -10,13 +10,14 @@ function send_binary_mat_file(tcp_client, binary_file)
 comm.tcp.send_acknowledge_comm(tcp_client);
 
 %Check how many packages are to sent
-pack_no = ceil((length(binary_file)) / eth_port.OutputBufferSize);
+buffer_size = tcp_client.OutputBufferSize;
+pack_no = ceil((length(binary_file)) / buffer_size);
 pause(0.05);
 
 for i=1:pack_no
 
     %Get index of bytes to send
-    pack_ind = [(i-1)*eth_port.OutputBufferSize+1 i*eth_port.OutputBufferSize];
+    pack_ind = [(i-1)*buffer_size+1 i*buffer_size];
     if i == pack_no      
        bin_pack = binary_file(pack_ind(1):end);
     else
