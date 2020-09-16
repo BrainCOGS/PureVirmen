@@ -14,7 +14,9 @@ function [tcp_client] = initialize_tcp(ipadress, port, role, outputbuffersize)
 
 %Open tcp and set configuration
 tcp_client = tcpip(ipadress, port, 'NetworkRole', role);
-tcp_client.OutputBufferSize = outputbuffersize;
+if outputbuffersize > 0
+    tcp_client.OutputBufferSize = outputbuffersize;
+end
 fopen(tcp_client);
 
 % If there is "garbage bytes" in buffer, read them to clean buffer
