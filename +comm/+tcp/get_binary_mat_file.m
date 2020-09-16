@@ -18,14 +18,14 @@ comm.tcp.get_acknowledge_comm(tcp_client);
     while comm_binary
         
         %Recieve num bytes sent by server (2 byte code)
-        bytes_read = comm.tcp.get_bytes(tcp_client, 2);
+        bytes_read = comm.tcp.get_tcp_bytes(tcp_client, 2);
         %Interpret in uint16 number of bytes to recieve in next message
         bytes_read = double(typecast(uint8(bytes_read),'uint16'));
 
         %If at least one byte is going to be sent
         if bytes_read ~= 0
             
-            bytes_protocol = comm.tcp.get_bytes(tcp_client, bytes_read);
+            bytes_protocol = comm.tcp.get_tcp_bytes(tcp_client, bytes_read);
             raw_data = [raw_data; bytes_protocol];
         else
             comm_binary = 0;
@@ -50,6 +50,6 @@ comm.tcp.get_acknowledge_comm(tcp_client);
     fclose(protocol_file);
     
     %Get structured data loading binary
-    struct_data = load('raw_data.mat');
-    
+    struct_data = load(raw_data_file);
+    struct_data = struct_data.structure;
 end

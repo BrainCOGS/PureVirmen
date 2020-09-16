@@ -38,6 +38,7 @@ while codes_missing
     pause(0.05);
     %Ask for next code structure
     comm.tcp.send_tcp_bytes(tcp_client, 2)
+    pause(0.02);
     % Recieve a one code message
     code = double(comm.tcp.get_tcp_bytes(tcp_client, 1));
     if ~isKey(files_dictionary, code)
@@ -46,14 +47,14 @@ while codes_missing
     end
     
     %Get name of the file to be sent
-    code_value = files_dictionary(code);
+    code_value = files_dictionary(code)
     
     %If we recieve a valid code 
     if code ~= 0
         pause(0.05);
         %Read binary mat file and set it to structure
         virmen_structures.(code_value) = ...
-            comm.tcp.get_binary_mat_file(tcp_client);
+            comm.tcp.get_binary_mat_file(tcp_client)
     else
         codes_missing = false;
     end
