@@ -8,11 +8,11 @@ function  [mazes, criteria, globalSettings, vr]  = readVirmenStructures(vr)
 % globalSettings     = global settings for towers task
 % vr                 = virmen handle, with extra parameters
 
-mazes = vr.virmen_structures.protocol.mazes;
-criteria = vr.virmen_structures.protocol.criteria;
-globalSettings = vr.virmen_structures.protocol.globalSettings;
+mazes = vr.virmen_structures.protocol_file.mazes;
+criteria = vr.virmen_structures.protocol_file.criteria;
+globalSettings = vr.virmen_structures.protocol_file.globalSettings;
 
-vr.stimulusGenerator = vr.virmen_structures.protocol.stimulusGenerator;
-vr.stimulusParameters = vr.virmen_structures.protocol.stimulusParameters;
-vr.inheritedVariables = vr.virmen_structures.protocol.inheritedVariables;
-vr.numMazesInProtocol = vr.virmen_structures.protocol.numMazesInProtocol;
+vr.stimulusGenerator = vr.virmen_structures.protocol_file.stimulusGenerator;
+vr.stimulusParameters = vr.virmen_structures.protocol_file.stimulusParameters;
+vr.inheritedVariables = vr.virmen_structures.protocol_file.inheritedVariables;
+vr.numMazesInProtocol = vr.virmen_structures.protocol_file.numMazesInProtocol;

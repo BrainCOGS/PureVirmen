@@ -3,6 +3,7 @@ function vr = initializeTrialWorld(vr)
 
   % ALS Get mazeChanged from BControl
   mazeChanged = 1;
+  vr.mazeID = 4;
 
   if mazeChanged && vr.flagmazeChanged
     vr.flagmazeChanged = 0;

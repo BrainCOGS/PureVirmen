@@ -2,11 +2,11 @@ function [vr] = drawCueSequenceMin(vr)
 %ALS adjust cue position in maze given the cuePos, already given
   % Common storage
   
-  %vr.cuePos                 = cell(size(ChoiceExperimentStats.CHOICES));
-  vr.cueOnset               = cell(size(ChoiceExperimentStats.CHOICES));
-  vr.cueOffset              = cell(size(ChoiceExperimentStats.CHOICES));
-  vr.cueTime                = cell(size(ChoiceExperimentStats.CHOICES));    % Redundant w.r.t. cueOnset, but useful for checking duration
-  vr.cueAppeared            = cell(size(ChoiceExperimentStats.CHOICES));
+  %vr.cuePos                 = cell(size(Choice.all()));
+  vr.cueOnset               = cell(size(Choice.all()));
+  vr.cueOffset              = cell(size(Choice.all()));
+  vr.cueTime                = cell(size(Choice.all()));     % Redundant w.r.t. cueOnset, but useful for checking duration
+  vr.cueAppeared            = cell(size(Choice.all()));
 
   vr.landmarkAppeared       = cellfun(@(x) false(size(x)), vr.landmarkPos, 'UniformOutput', false);
   vr.landmarkOnset          = cellfun(@(x) zeros(size(x), vr.iterStr), vr.landmarkPos, 'UniformOutput', false);

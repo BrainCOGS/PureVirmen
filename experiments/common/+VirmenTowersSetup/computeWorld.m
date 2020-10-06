@@ -22,7 +22,7 @@ function vr = computeWorld(vr)
 
 
   %% ALS Get crossing of important landmarks
-  vr                         = getCrossingsMaze(vr);
+  vr                         = VirmenTowersSetup.getCrossingsMaze(vr);
 
 
   %% Indices of left/right turn cues
@@ -62,7 +62,7 @@ function vr = computeWorld(vr)
   % Cache various properties of the loaded world (maze configuration) for speed
   vr                        = cacheMazeConfig(vr);
   vr.cueIndex               = zeros(1, numel(turnCues));
-  vr.slotPos                = nan(numel(ChoiceExperimentStats.CHOICES), vr.nCueSlots);
+  vr.slotPos                = nan(numel(Choice.all()), vr.nCueSlots);
   for iChoice = 1:numel(turnCues)
     vr.cueIndex(iChoice)    = vr.worlds{vr.currentWorld}.objects.indices.(turnCues{iChoice});
     cueObject               = vr.exper.worlds{vr.currentWorld}.objects{vr.cueIndex(iChoice)};
@@ -70,7 +70,7 @@ function vr = computeWorld(vr)
   end
   
   % Set and record template position of cues
-  vr = VirmenTowersSetuo.setCuesPosition(vr, turnCues);
+  vr = VirmenTowersSetup.setCuesPosition(vr, turnCues);
   
   % Set and record template color of cues
   if ~isempty(vr.motionBlurRange) && ~isnan(vr.dimCue)

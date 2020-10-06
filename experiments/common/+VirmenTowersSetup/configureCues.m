@@ -20,7 +20,7 @@ function vr = configureCues(vr)
   end
   
   %% Turn off visibility of cues that are not appropriate for the trial type
-  otherChoices          = setdiff(ChoiceExperimentStats.CHOICES, vr.trialType);
+  otherChoices          = setdiff(Choice.all(), vr.trialType);
   if isfield(vr, 'choiceHintNames')
     for name = vr.choiceHintNames
       for choice = otherChoices

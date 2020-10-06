@@ -11,7 +11,7 @@ function [virmen_structure, codes_files] = generate_all_Virmen_vars()
 virmen_structure = struct();
 
 % Get a test protocol file and binarize it
-protocol = virmen_utils.get_test_protocol_Virmen();
+protocol = virmen_utils.get_protocol_hniehE65_20180202();
 virmen_structure.protocol_file = virmen_utils.struct2binary(protocol);
 
 % Get a test trainee file and binarize it

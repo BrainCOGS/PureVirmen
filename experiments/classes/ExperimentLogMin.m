@@ -67,9 +67,8 @@ classdef ExperimentLogMin < handle
     SENSOR_DATASIZE = 'int16';      % Data type specifier for raw sensor readout
     
     DEFAULT_PREALLOCSIZE  = 10000   % Default size of arrays to preallocate
-    PREALLOCATED_FIELDS   = { 'block'         ...
-                            , 'trial'         ...
-                            , 'position'      ...
+    PREALLOCATED_FIELDS   = {
+                              'position'      ...
                             , 'velocity'      ...
                             , 'sensorDots'    ...
                             , 'collision'     ...
@@ -124,7 +123,7 @@ classdef ExperimentLogMin < handle
     %----- Constructor
     function obj = ExperimentLogMin(logPath)
 
-      obj.preallocSize      = ExperimentLog.DEFAULT_PREALLOCSIZE;
+      obj.preallocSize      = ExperimentLogMin.DEFAULT_PREALLOCSIZE;
       obj.savePerNTrials      = 1;
       obj.writeCounter        = 0;
       
@@ -136,16 +135,17 @@ classdef ExperimentLogMin < handle
       obj.trialInfo.trial     = uint32(0);
       obj.trialInfo.viStart   = uint32(0);
       obj.trialInfo.start     = nan;
-      obj.trialInfo.position  = nan(0, numel(ExperimentLog.SPATIAL_COORDS));
-      obj.trialInfo.velocity  = nan(0, numel(ExperimentLog.SPATIAL_COORDS));
-      obj.trialInfo.sensorDots= zeros(0, numel(ExperimentLog.SENSOR_COORDS), ExperimentLog.SENSOR_DATASIZE);
+      obj.trialInfo.position  = nan(0, numel(ExperimentLogMin.SPATIAL_COORDS));
+      obj.trialInfo.velocity  = nan(0, numel(ExperimentLogMin.SPATIAL_COORDS));
+      obj.trialInfo.sensorDots= zeros(0, numel(ExperimentLogMin.SENSOR_COORDS), ExperimentLogMin.SENSOR_DATASIZE);
       obj.trialInfo.collision = false(0);
       obj.trialInfo.time      = nan(0);
       obj.trialInfo.iterations= uint32(0);
+      obj.trialInfo.duration  = 0;
       
       % Preallocated storage structure for logging current trial
       obj.emptyTrial          = obj.trialInfo;
-      for field = ExperimentLog.PREALLOCATED_FIELDS
+      for field = ExperimentLogMin.PREALLOCATED_FIELDS
         if islogical(obj.emptyTrial.(field{:}))
           obj.emptyTrial.(field{:})                         ...
               = false ( obj.preallocSize                    ...
@@ -172,6 +172,7 @@ classdef ExperimentLogMin < handle
     % Start a row to save a new trial in the session, 
     function newTrial(obj)
       
+      obj.writeIndex            = 0;
       obj.session(end+1).block  = 1;
       obj.session(end).trial    = obj.writeIndex;
         
@@ -193,7 +194,8 @@ classdef ExperimentLogMin < handle
       end
             
       makepath(obj.logFile);
-      save(obj.logFile, 'log');
+      session = obj.session;
+      save(obj.logFile, 'session');
       obj.writeCounter          = 0;
       
       % For user's convenience
@@ -241,19 +243,19 @@ classdef ExperimentLogMin < handle
       % These continue to be stored even during the inter-trial interval
       obj.currentTrial.time(obj.currentIt,1)          = vr.timeElapsed - obj.currentTrial.start;
       if nargin > 2 && ~isempty(sensorDots)
-        obj.currentTrial.sensorDots(obj.currentIt,:)  = sensorDots(ExperimentLog.SENSOR_COORDS);
+        obj.currentTrial.sensorDots(obj.currentIt,:)  = sensorDots(ExperimentLogMin.SENSOR_COORDS);
       end
       
       if obj.trialEnded <= 1      % Should log the final position at end of trial
-        obj.currentTrial.position(obj.currentIt,:)    = vr.position(ExperimentLog.SPATIAL_COORDS);
-        obj.currentTrial.velocity(obj.currentIt,:)    = vr.velocity(ExperimentLog.SPATIAL_COORDS);
+        obj.currentTrial.position(obj.currentIt,:)    = vr.position(ExperimentLogMin.SPATIAL_COORDS);
+        obj.currentTrial.velocity(obj.currentIt,:)    = vr.velocity(ExperimentLogMin.SPATIAL_COORDS);
         obj.currentTrial.collision(obj.currentIt,1)   = vr.collision;
         if obj.trialEnded == 1
           obj.trialEnded  = obj.trialEnded + 1;
         end
       end
       
-      indices             = [numel(obj.block), obj.writeIndex, obj.currentIt];
+      indices             = [numel(obj.session), obj.writeIndex, obj.currentIt];
         
     end
 
@@ -285,7 +287,7 @@ classdef ExperimentLogMin < handle
       % If a specified number of trials has elapsed, write to disk
       obj.writeCounter    = obj.writeCounter + 1;
       if obj.writeCounter >= obj.savePerNTrials
-        obj.save(false, vr.timeElapsed);
+        obj.save(vr.timeElapsed);
       end
 
     end

@@ -2,7 +2,7 @@
 function vr = setupTrials(vr)
 
   % Initialize standard state control variables
-  vr    = initializeGradedExperiment(vr);
+  vr    = VirmenTowersSetup.initializeGradedExperiment(vr);
 
   %Read virmen_structures communicated from BControl
   [mazes, criteria, globalSettings, vr] = ...
@@ -13,7 +13,7 @@ function vr = setupTrials(vr)
   vr.shapingProtocol    = @test;
   
   %Mainly change vr.exper variables to vr.
-  vr = experVariables2vr(vr);
+  vr = VirmenTowersSetup.experVariables2vr(vr);
 
   % The following variables are refreshed (assigned under the vr struct) each time a different maze level is loaded
   % vr.stimulusParameters is set in the protocol and includes e.g. cueVisibleAt
@@ -36,7 +36,7 @@ function vr = setupTrials(vr)
     %ALS, just for now a path to save log
     timestr = datestr(now(), 'YYYY-mm-dd HH_MM');
     filePath = ['user1\subject1\' timestr];  
-    vr.logger           = ExperimentLogMin(vr, filePath);
+    vr.logger           = ExperimentLogMin(filePath);
   end
   
   vr.prevIndices = [0 0 0];

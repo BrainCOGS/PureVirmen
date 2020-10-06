@@ -6,10 +6,11 @@ function [ vr ] = getNextTrial( vr )
 %trialType
 
 trial_structure = comm.tcp.get_binary_mat_file(vr.tcp_client);
-
 vr.cuePos    = trial_structure.cuePos;
 vr.cueCombo  = trial_structure.cueCombo;
-%vr.trialType = trial_structure.trialType;
+vr.trialType  = trial_structure.trialType;
+
+
 
 end
 
