@@ -48,7 +48,7 @@ while codes_missing
     end
     
     %Get name of the file to be sent
-    code_value = files_dictionary(code)
+    code_value = files_dictionary(code);
     
     %If we recieve a valid code 
     if code ~= 0
@@ -57,7 +57,7 @@ while codes_missing
         raw_data= comm.tcp.get_binary_mat_file(tcp_client);
     
         virmen_structures.(code_value) = ...
-            comm.utility.load_binary_data(raw_data);
+            comm.utility.load_binary_data(raw_data)
     else
         codes_missing = false;
     end

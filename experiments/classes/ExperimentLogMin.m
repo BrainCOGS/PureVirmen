@@ -296,7 +296,7 @@ classdef ExperimentLogMin < handle
           for i=1:length(fields)
             trial.(fields{i}) = obj.currentTrial.fields(size_trial, :);
           end
-          
+    end
     
     %----- To be called at the end of each trial to handle blocking input
     function logExtras(obj, vr)
