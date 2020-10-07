@@ -8,7 +8,8 @@ function trainee  = get_communicate_trainee(tcp_client)
 % trainee      = trainee structure for Old Virmen Protocols 
 
 % get a binary file -> structure
-struct_data = comm.tcp.get_binary_mat_file(tcp_client);
+raw_data = comm.tcp.get_binary_mat_file(tcp_client);
+struct_data = comm.utility.load_binary_data(raw_data);
 
 %trainee structure has a "trainee_struct" structure 
 %trainee = struct();

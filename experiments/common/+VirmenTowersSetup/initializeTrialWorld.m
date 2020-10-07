@@ -3,7 +3,7 @@ function vr = initializeTrialWorld(vr)
 
   % ALS Get mazeChanged from BControl
   mazeChanged = 1;
-  vr.mazeID = 4;
+  %vr.mazeID = 4;
 
   if mazeChanged && vr.flagmazeChanged
     vr.flagmazeChanged = 0;
@@ -37,7 +37,6 @@ function vr = initializeTrialWorld(vr)
   vr.iBlank                 = vr.iterFcn(0);
 
   % Cue presence on right and wrong sides
-  vr      = VirmenTowersSetup.getNextTrial(vr);
   vr      = VirmenTowersSetup.drawCueSequenceMin(vr);
   
   % Visibility range of visual guides

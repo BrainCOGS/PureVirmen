@@ -1,5 +1,5 @@
 function send_binary_mat_file(tcp_client, binary_file)
-% Protocol to read a binary train from another computer by tcpip
+% Protocol to read a binary 8bit train from another computer by tcpip
 %
 % Input
 % tcp_client   = tcpip handle for communication

@@ -4,7 +4,7 @@ function [ vr ] = inMemoryRulesExec( vr )
 
 %Check for turn crossing
 if isPastCrossing(vr.cross_turn, vr.position)
-    %vr.BpodMod.sendEvent(5);
+    vr.BpodMod.sendEvent(5);
     vr.iTurnEntry     = vr.iterFcn(vr.logger.iterationStamp());
 end
 

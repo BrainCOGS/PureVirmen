@@ -14,7 +14,8 @@ function [mazes, criteria, globalSettings, vr] = get_communicate_protocol_legacy
 
 
 %Get binary file with protocol
-struct_data = comm.tcp.get_binary_mat_file(tcp_client);
+raw_data = comm.tcp.get_binary_mat_file(tcp_client);
+struct_data = comm.utility.load_binary_data(raw_data);
 
 %Get mazes, criteria and globalSettings structure
 mazes = struct_data.mazes;

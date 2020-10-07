@@ -19,7 +19,7 @@ elseif vr.iMemEntry > 0
     
     % Check if animal has entered the memory region after the cue period
 elseif vr.iCueEntry > 0 && isPastCrossing(vr.cross_memory, vr.position)
-    epoch = Region.InMemory0;
+    epoch = Region.InMemoryZero;
     
     % If still in the start region, do nothing
 elseif vr.iCueEntry < 1 && ~isPastCrossing(vr.cross_cue, vr.position)

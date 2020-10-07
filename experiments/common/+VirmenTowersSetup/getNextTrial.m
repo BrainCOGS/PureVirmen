@@ -5,11 +5,18 @@ function [ vr ] = getNextTrial( vr )
 %cueCombo
 %trialType
 
-trial_structure = comm.tcp.get_binary_mat_file(vr.tcp_client);
+raw_data = comm.tcp.get_binary_mat_file(vr.tcp_client);
+trial_structure = comm.utility.load_binary_data(raw_data);
+
 vr.cuePos    = trial_structure.cuePos;
 vr.cueCombo  = trial_structure.cueCombo;
 vr.trialType  = trial_structure.trialType;
 
+vr.nSalient = trial_structure.nSalient;
+vr.nDistract = trial_structure.nDistract;
+
+vr.mazeID = trial_structure.mazeID;
+vr.mainMazeID = trial_structure.mainMazeID;
 
 
 end

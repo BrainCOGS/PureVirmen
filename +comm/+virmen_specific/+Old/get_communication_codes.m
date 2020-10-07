@@ -18,7 +18,8 @@ function codes_structure  = get_communication_codes(tcp_client)
 %   etc ....
 
 % get a binary file -> structure
-struct_data = comm.tcp.get_binary_mat_file(tcp_client);
+raw_data = comm.tcp.get_binary_mat_file(tcp_client);
+struct_data = comm.utility.load_binary_data(raw_data);
 
 %trainee structure has a "trainee_struct" structure 
 %trainee = struct();

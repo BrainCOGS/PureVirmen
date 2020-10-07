@@ -3,7 +3,7 @@ function [ vr ] = inCuesRulesExec( vr )
 %Code executed when subject is inside Cue Region PoissonTowers
 
 if vr.iCueEntry < 1
-    %vr.BpodMod.sendEvent(3);
+    vr.BpodMod.sendEvent(3);
     vr.iCueEntry      = vr.iterFcn(vr.logger.iterationStamp());
 end
 

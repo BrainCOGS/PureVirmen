@@ -38,5 +38,8 @@ trainee_struct.color = [0 0 0];
 trainee_struct.sessionIndex = 1;
 trainee_struct.overrideMazeID = 0;
 
+
+trainee_struct.trial_
+
 end
 

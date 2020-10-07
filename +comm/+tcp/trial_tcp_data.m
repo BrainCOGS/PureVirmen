@@ -18,7 +18,7 @@ if vr.act_comm
         serialdata = [serialdata ...
             typecast(vr.sensorData(ExperimentLogMin.SENSOR_COORDS), 'uint8')];
     else
-        serialdata = [serialdata uint8(zeros(1, numel(ExperimentLog.SENSOR_COORDS)*2))];
+        serialdata = [serialdata uint8(zeros(1, numel(ExperimentLogMin.SENSOR_COORDS)*2))];
     end
     
     %Concatenate all data
@@ -27,7 +27,7 @@ if vr.act_comm
     
     %Write it to tcp_port
     fwrite(vr.tcp_client, serialdata)
-    
+
 end
 
 end

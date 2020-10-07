@@ -1,11 +1,21 @@
-function struct_data = get_binary_mat_file(tcp_client)
+function raw_data = get_binary_mat_file(tcp_client)
 % Protocol to read a binary train from another computer by tcpip
+% Also used to send struct composed by arrays with an associated map
 %
 % Input
 % tcp_client   = tcpip handle for communication
 %
 % Outputs
-% struct_data  = data after loading mat file
+% struct_data  = data after loading mat file or encoding binary
+
+% Is it a binary mat file or a struct composed by arrays
+if nargin < 2
+    data_type = -1;
+    transfer_type = 'Binary';
+else
+    transfer_type = 'Struct array';
+end
+
 
 %Binary raw data, initialize as a uint8 variable
 raw_data = uint8(1);
@@ -34,22 +44,5 @@ comm.tcp.get_acknowledge_comm(tcp_client);
     
     %Delete initial dummy byte
     raw_data = raw_data(2:end);
-    
-    %Get current directory and raw data placeholder file
-    current_directory = fileparts(mfilename('fullpath'));
-    raw_data_file     = fullfile(current_directory, 'raw_data.mat');
-    
-    %If file exist, delete it
-    if exist(raw_data_file, 'file')
-        delete(raw_data_file);
-    end
-    
-    %Open empty file to write binary info
-    protocol_file = fopen(raw_data_file, 'w');
-    fwrite(protocol_file, raw_data);
-    fclose(protocol_file);
-    
-    %Get structured data loading binary
-    struct_data = load(raw_data_file);
-    struct_data = struct_data.structure;
+        
 end

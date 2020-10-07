@@ -21,25 +21,29 @@ function vr = initializationCodeFun(vr)
 % Close previously opened communications
 comm.close_all_comm();
 
+%Initialize Serial Module BPOD
+vr.BpodMod = PCBPODModule('COM7');
+
 % Initialize tcp comm with Bcontrol
-%   vr.tcp_client = comm.tcp.initialize_tcp( ...
-%       VirmenCommParameters.ipAddressBControl, ...
-%       VirmenCommParameters.tcpClientPort, ...
-%       VirmenCommParameters.networkRole, ...
-%       VirmenCommParameters.outputBufferSize);
-%
-%   pause(0.5)
-%   vr.virmen_structures = comm.virmen_specific.get_all_virmen_vars(vr.tcp_client);
+  vr.tcp_client = comm.tcp.initialize_tcp( ...
+      VirmenCommParameters.ipAddressBControl, ...
+      VirmenCommParameters.tcpClientPort, ...
+      VirmenCommParameters.networkRole, ...
+      VirmenCommParameters.outputBufferSize);
+
+  pause(0.5)
+  vr.virmen_structures = comm.virmen_specific.get_all_virmen_vars(vr.tcp_client);
+  
+%Code when we want to test it alone...  
 %save('C:\Users\BrainCogs_Projects\ViRMEn_BPOD\+virmen_utils\virmen_structures_test.mat', ...
-%    'virmen_structures');
+%   'virmen_structures');
+% test_virmen_struct = load('C:\Users\BrainCogs_Projects\ViRMEn_BPOD\+virmen_utils\virmen_structures_test.mat');
+% test_virmen_struct.virmen_structures.protocol_file = ...
+%     virmen_utils.get_protocol_hniehE65_20180202();
+%vr.virmen_structures = test_virmen_struct.virmen_structures;
 
-test_virmen_struct = load('C:\Users\BrainCogs_Projects\ViRMEn_BPOD\+virmen_utils\virmen_structures_test.mat');
-test_virmen_struct.virmen_structures.protocol_file = ...
-    virmen_utils.get_protocol_hniehE65_20180202();
 
-
-vr.virmen_structures = test_virmen_struct.virmen_structures;
-vr.virmen_structures.trainee_file.mainMazeID = 4;
+%vr.virmen_structures.trainee_file.mainMazeID = 4;
 
 vr.exper.userdata.trainee = vr.virmen_structures.trainee_file;
 
@@ -102,8 +106,7 @@ try
                 % animal is suddenly displaced forward upon start of world display.
                 
                 
-                vr                    = getNextTrial(vr);
-                
+                vr                    = VirmenTowersSetup.getNextTrial(vr);
                 vr                    = VirmenTowersSetup.initializeTrialWorld(vr);
                 %if vr.protocol.endExperiment == true
                 % Allow end of experiment only after completion of the last trial
@@ -117,6 +120,19 @@ try
                 %========================================================================
             case BehavioralState.InitializeTrial
                 % Teleport to start and send signals indicating start of trial
+                
+                event = -1;
+                s = 0;
+                while event == -1
+                    event = vr.BpodMod.readEvent();
+                    pause(0.2);
+                    disp(event);
+                    s = s+1;
+                    disp(['Wait start: ' num2str(s)]);
+                end
+                
+                vr.act_comm           = true;
+                
                 vr                    = teleportToStart(vr);
                 vr                    = startVRTrial(vr);
                 vr.logger.logStart(vr);
@@ -164,7 +180,7 @@ try
                         vr = VirmenTowersSetup.inMemoryRulesExec(vr);
                         
                         % Check if animal has entered the memory region after the cue period
-                    case Region.InMemory0
+                    case Region.InMemoryZero
                         vr = VirmenTowersSetup.inMemory0RulesExec(vr);
                         
                         % If still in the start region, do nothing
@@ -193,8 +209,13 @@ try
                 
                 % Log the end of the trial
                 vr.excessTravel = vr.logger.distanceTraveled() / vr.mazeLength - 1;
-                vr.logger.logEnd(vr);
+                currentTrial = vr.logger.logEnd();
                 
+                %Send info from past trial
+                tic
+                binary_currentTrial = virmen_utils.struct2binary(currentTrial);
+                comm.tcp.send_binary_mat_file(vr.tcp_client, binary_currentTrial);
+                toc
                 % Handle reward/punishment and end of trial pause
                 %ALS, this is done in BCOntrol
                 vr.state      = BehavioralState.EndOfTrial;
@@ -239,7 +260,7 @@ try
     %vr.protocol.update();
     
     %vr = BPOD_signal_frames(vr);
-    %vr = BPOD_communication(vr);
+    %vr = comm.tcp.trial_tcp_data(vr);
     
     % Send DAQ signals for multi-computer synchronization
     %updateDAQSyncSignals(vr.iterFcn(loggingIndices));

@@ -5,10 +5,10 @@ function [ vr ] = inArmRulesExec( vr )
 for iChoice = 1:numel(vr.cross_choice)
     if isPastCrossing(vr.cross_choice(iChoice), vr.position)
         vr.choice       = Choice(iChoice);
-        if vr.choice == 'L'
-            %vr.BpodMod.sendEvent(7);
+        if vr.choice == Choice.L
+            vr.BpodMod.sendEvent(7);
         else
-            %vr.BpodMod.sendEvent(8);
+            vr.BpodMod.sendEvent(8);
         end
         
         vr.state        = BehavioralState.ChoiceMade;

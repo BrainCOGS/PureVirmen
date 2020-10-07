@@ -19,7 +19,8 @@ virmen_structures = struct();
 
 
 %Get structure that indicate code for each type of file to be sent
-codes_structure = comm.tcp.get_binary_mat_file(tcp_client);
+raw_data = comm.tcp.get_binary_mat_file(tcp_client);
+codes_structure = comm.utility.load_binary_data(raw_data);
 %codes_structure = get_communication_codes(tcp_client);
 pause(0.05);
 
@@ -53,8 +54,10 @@ while codes_missing
     if code ~= 0
         pause(0.05);
         %Read binary mat file and set it to structure
+        raw_data= comm.tcp.get_binary_mat_file(tcp_client);
+    
         virmen_structures.(code_value) = ...
-            comm.tcp.get_binary_mat_file(tcp_client)
+            comm.utility.load_binary_data(raw_data);
     else
         codes_missing = false;
     end

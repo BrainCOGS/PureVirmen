@@ -260,7 +260,7 @@ classdef ExperimentLogMin < handle
     end
 
     %----- To be called at the end of each trial to store per-trial data
-    function logEnd(obj, vr)
+    function currentTrial = logEnd(obj)
 
       % Mark end of trial (before inter-trial-interval)
       obj.trialEnded    = 1;
@@ -271,6 +271,10 @@ classdef ExperimentLogMin < handle
       obj.currentTrial.velocity(obj.currentTrial.iterations+1:end,:)  = [];
       obj.currentTrial.collision(obj.currentTrial.iterations+1:end,:) = [];
       
+      currentTrial.position = obj.currentTrial.position(1:end-1, :);
+      currentTrial.velocity = obj.currentTrial.velocity(1:end-1, :);
+      size_pos = size(currentTrial.position,1);
+      currentTrial.sensorDots = obj.currentTrial.sensorDots(size_pos, :);
     end
     
     %----- To be called at the end of each trial to handle blocking input
