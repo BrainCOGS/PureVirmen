@@ -146,9 +146,9 @@ classdef ExperimentLogMin < handle
       obj.trialInfo.trial     = uint32(0);
       obj.trialInfo.viStart   = uint32(0);
       obj.trialInfo.start     = nan;
-      obj.trialInfo.position  = ExperimentalLogMin.POSITION_SAMPLE;
-      obj.trialInfo.velocity  = ExperimentalLogMin.VELOCITY_SAMPLE;
-      obj.trialInfo.sensorDots= ExperimentalLogMin.SENSORDOTS_SAMPLE;
+      obj.trialInfo.position  = ExperimentLogMin.POSITION_SAMPLE;
+      obj.trialInfo.velocity  = ExperimentLogMin.VELOCITY_SAMPLE;
+      obj.trialInfo.sensorDots= ExperimentLogMin.SENSORDOTS_SAMPLE;
       obj.trialInfo.collision = false(0);
       obj.trialInfo.time      = nan(0);
       obj.trialInfo.iterations= uint32(0);
