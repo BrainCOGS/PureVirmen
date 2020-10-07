@@ -23,14 +23,14 @@ struct_data = struct();
 for i=1:length(struct_map)
     
     % Get struct_map data
-    field_name      = struct2send.(struct_map{i,1});
-    data_type       = struct2send.(struct_map{i,2});
-    columns_matrix  = struct2send.(struct_map{i,3});
+    field_name      = struct_map{i,1};
+    data_type       = struct_map{i,2};
+    columns_matrix  = struct_map{i,3};
     
     % Get raw data, decode it, and reshape it based on #columns
     raw_data        = comm.tcp.get_binary_mat_file(tcp_client);
     vector_data     = typecast(raw_data,data_type);
-    rows_matrix     = length(struct_data) / columns_matrix;
+    rows_matrix     = length(vector_data) / columns_matrix;
     matrix_data     = reshape(vector_data, [rows_matrix, columns_matrix]);
     
     struct_data.(field_name) = matrix_data;

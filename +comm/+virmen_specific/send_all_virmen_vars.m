@@ -49,6 +49,8 @@ end
 %Send 0 when finished 
 comm.tcp.send_tcp_bytes(tcp_client, uint8(0));
 
+%Exit ok after sending last message
+comm.tcp.get_tcp_bytes(tcp_client, 1);
 
 end
 
