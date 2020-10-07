@@ -76,6 +76,17 @@ classdef ExperimentLogMin < handle
                             }
     
     DEFAULT_PATH          = 'C:\Data\'
+    
+    POSITION_SAMPLE       = nan(0, numel(ExperimentLogMin.SPATIAL_COORDS), 'single');
+    VELOCITY_SAMPLE       = nan(0, numel(ExperimentLogMin.SPATIAL_COORDS), 'single');
+    SENSORDOTS_SAMPLE     = zeros(0, numel(ExperimentLogMin.SENSOR_COORDS), ExperimentLogMin.SENSOR_DATASIZE);
+    
+    TRAIL_COMM_SAMPLE     = struct('position',   ExperimentLogMin.POSITION_SAMPLE, ...
+                                   'velocity',   ExperimentLogMin.VELOCITY_SAMPLE, ...
+                                   'sensorDots', ExperimentLogMin.SENSORDOTS_SAMPLE);  
+               
+    TRAIL_COMM_SAMPLE_STRUCT_MAP = ...
+        comm.utility.get_struct_map(ExperimentLogMin.TRAIL_COMM_SAMPLE)                      
   end
   
   %------- Private data
@@ -135,9 +146,9 @@ classdef ExperimentLogMin < handle
       obj.trialInfo.trial     = uint32(0);
       obj.trialInfo.viStart   = uint32(0);
       obj.trialInfo.start     = nan;
-      obj.trialInfo.position  = nan(0, numel(ExperimentLogMin.SPATIAL_COORDS));
-      obj.trialInfo.velocity  = nan(0, numel(ExperimentLogMin.SPATIAL_COORDS));
-      obj.trialInfo.sensorDots= zeros(0, numel(ExperimentLogMin.SENSOR_COORDS), ExperimentLogMin.SENSOR_DATASIZE);
+      obj.trialInfo.position  = ExperimentalLogMin.POSITION_SAMPLE;
+      obj.trialInfo.velocity  = ExperimentalLogMin.VELOCITY_SAMPLE;
+      obj.trialInfo.sensorDots= ExperimentalLogMin.SENSORDOTS_SAMPLE;
       obj.trialInfo.collision = false(0);
       obj.trialInfo.time      = nan(0);
       obj.trialInfo.iterations= uint32(0);
@@ -260,7 +271,7 @@ classdef ExperimentLogMin < handle
     end
 
     %----- To be called at the end of each trial to store per-trial data
-    function currentTrial = logEnd(obj)
+    function logEnd(obj)
 
       % Mark end of trial (before inter-trial-interval)
       obj.trialEnded    = 1;
@@ -271,11 +282,21 @@ classdef ExperimentLogMin < handle
       obj.currentTrial.velocity(obj.currentTrial.iterations+1:end,:)  = [];
       obj.currentTrial.collision(obj.currentTrial.iterations+1:end,:) = [];
       
-      currentTrial.position = obj.currentTrial.position(1:end-1, :);
-      currentTrial.velocity = obj.currentTrial.velocity(1:end-1, :);
-      size_pos = size(currentTrial.position,1);
-      currentTrial.sensorDots = obj.currentTrial.sensorDots(size_pos, :);
     end
+    
+    function trial = getTrialSendComm(obj)
+        % Get trial to send by tcp at the end of trial
+        
+          % Get trial sample
+          trial = ExperimentLogMin.TRAIL_COMM_SAMPLE;
+          % Which fields to copy and what size
+          fields = fieldnames(trial);
+          size_trial = size(obj.currentTrial.position,1) -1;
+          %Form new structure
+          for i=1:length(fields)
+            trial.(fields{i}) = obj.currentTrial.fields(size_trial, :);
+          end
+          
     
     %----- To be called at the end of each trial to handle blocking input
     function logExtras(obj, vr)

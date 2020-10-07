@@ -209,15 +209,18 @@ try
                 
                 % Log the end of the trial
                 vr.excessTravel = vr.logger.distanceTraveled() / vr.mazeLength - 1;
-                currentTrial = vr.logger.logEnd();
-                
+                vr.logger.logEnd();
+                trial_comm = vr.logger.getTrialSendComm();
                 %Send info from past trial
+                
                 tic
-                binary_currentTrial = virmen_utils.struct2binary(currentTrial);
-                comm.tcp.send_binary_mat_file(vr.tcp_client, binary_currentTrial);
+                struct_map = ExperimentLogMin.TRAIL_COMM_SAMPLE_STRUCT_MAP;
+                comm.tcp.send_array_structure( ...
+                    vr.tcp_client, trial_comm, struct_map);
                 toc
+                
                 % Handle reward/punishment and end of trial pause
-                %ALS, this is done in BCOntrol
+                %ALS, this is done in BControl
                 vr.state      = BehavioralState.EndOfTrial;
                 %vr = judgeVRTrial(vr);
                 
