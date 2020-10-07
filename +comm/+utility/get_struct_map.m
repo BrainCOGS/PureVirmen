@@ -24,7 +24,7 @@ types = cellfun(@(x) class(structure.(x)), fields, 'UniformOutput', false);
 columns = cellfun(@(x) size(structure.(x),2), fields, 'UniformOutput', false);
 
 % Merge map
-struct_map = cellfun(@(x,y,z) {x,y,z}, fields, types, columns, 'UniformOutput', false);
+struct_map = [fields types columns];
 
 
 end
