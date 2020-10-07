@@ -294,7 +294,7 @@ classdef ExperimentLogMin < handle
           size_trial = size(obj.currentTrial.position,1) -1;
           %Form new structure
           for i=1:length(fields)
-            trial.(fields{i}) = obj.currentTrial.fields(size_trial, :);
+            trial.(fields{i}) = obj.currentTrial.(fields{i})(size_trial, :);
           end
     end
     
