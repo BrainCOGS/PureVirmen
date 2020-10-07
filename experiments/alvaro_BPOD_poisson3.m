@@ -31,7 +31,6 @@ vr.BpodMod = PCBPODModule('COM7');
       VirmenCommParameters.networkRole, ...
       VirmenCommParameters.outputBufferSize);
 
-  pause(0.5)
   vr.virmen_structures = comm.virmen_specific.get_all_virmen_vars(vr.tcp_client);
   
 %Code when we want to test it alone...  
@@ -210,7 +209,9 @@ try
                 % Log the end of the trial
                 vr.excessTravel = vr.logger.distanceTraveled() / vr.mazeLength - 1;
                 vr.logger.logEnd();
+                tic
                 trial_comm = vr.logger.getTrialSendComm();
+                toc
                 %Send info from past trial
                 
                 tic
