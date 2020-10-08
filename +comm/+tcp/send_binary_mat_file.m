@@ -14,8 +14,11 @@ buffer_size = tcp_client.OutputBufferSize;
 pack_no = ceil((length(binary_file)) / buffer_size);
 pause(0.003);
 
+buffer_size
+pack_no
+tic
 for i=1:pack_no
-
+    
     %Get index of bytes to send
     pack_ind = [(i-1)*buffer_size+1 i*buffer_size];
     if i == pack_no      
@@ -33,7 +36,7 @@ for i=1:pack_no
     comm.tcp.send_tcp_bytes(tcp_client, bin_pack);
     pause(0.003);
 end
-
+toc
 %Send 0 extra bytes 2 send
 comm.tcp.send_tcp_bytes(tcp_client, uint8([0 0]));
 
