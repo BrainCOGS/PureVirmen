@@ -12,7 +12,7 @@ comm.tcp.send_acknowledge_comm(tcp_client);
 %Check how many packages are to sent
 buffer_size = tcp_client.OutputBufferSize;
 pack_no = ceil((length(binary_file)) / buffer_size);
-pause(0.003);
+pause(0.005);
 
 for i=1:pack_no
 
@@ -28,10 +28,10 @@ for i=1:pack_no
     
     %Send 2 size bytes
     comm.tcp.send_tcp_bytes(tcp_client, bytes_2_send);
-    pause(0.003);
+    pause(0.0);
     %Send binary array package
     comm.tcp.send_tcp_bytes(tcp_client, bin_pack);
-    pause(0.003);
+    pause(0.01);
 end
 
 %Send 0 extra bytes 2 send
