@@ -31,6 +31,7 @@ vr.BpodMod = PCBPODModule('COM7');
       VirmenCommParameters.networkRole, ...
       VirmenCommParameters.outputBufferSize);
 
+  pause(0.5);
   vr.virmen_structures = comm.virmen_specific.get_all_virmen_vars(vr.tcp_client);
   
 %Code when we want to test it alone...  
