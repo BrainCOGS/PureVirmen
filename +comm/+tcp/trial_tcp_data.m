@@ -9,16 +9,16 @@ if vr.act_comm
     time = single(vr.logger.currentTrial.time(vr.logger.currentIt,1));
     
     %Get position and velocity
-    serialdata = typecast([single(vr.position(ExperimentLogMin.SPATIAL_COORDS)) ...
-        single(vr.velocity(ExperimentLogMin.SPATIAL_COORDS)) ...
+    serialdata = typecast([single(vr.position(ExperimentLogVirmen.SPATIAL_COORDS)) ...
+        single(vr.velocity(ExperimentLogVirmen.SPATIAL_COORDS)) ...
         time],'uint8');
     
     %Get sensor info
     if ~isempty(vr.sensorData)
         serialdata = [serialdata ...
-            typecast(vr.sensorData(ExperimentLogMin.SENSOR_COORDS), 'uint8')];
+            typecast(vr.sensorData(ExperimentLogVirmen.SENSOR_COORDS), 'uint8')];
     else
-        serialdata = [serialdata uint8(zeros(1, numel(ExperimentLogMin.SENSOR_COORDS)*2))];
+        serialdata = [serialdata uint8(zeros(1, numel(ExperimentLogVirmen.SENSOR_COORDS)*2))];
     end
     
     %Concatenate all data

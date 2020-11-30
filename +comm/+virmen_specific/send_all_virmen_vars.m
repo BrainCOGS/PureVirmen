@@ -17,7 +17,7 @@ function send_all_virmen_vars(tcp_client, codes_files, virmen_structure)
 
 
 %Get structure that indicate code for each type of file to be sent
-codes_binary = virmen_utils.struct2binary(codes_files);
+codes_binary = comm.utility.struct2binary(codes_files);
 comm.tcp.send_binary_mat_file(tcp_client, codes_binary);
 
 
@@ -46,7 +46,7 @@ for i=1:length(files2send)
 end
 
 
-%Send 0 when finished 
+%Send 0 when finished (0 bytes next)
 comm.tcp.send_tcp_bytes(tcp_client, uint8(0));
 
 %Exit ok after sending last message

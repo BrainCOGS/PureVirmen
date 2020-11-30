@@ -36,7 +36,7 @@ function vr = setupTrials(vr)
     %ALS, just for now a path to save log
     timestr = datestr(now(), 'YYYY-mm-dd HH_MM');
     filePath = ['user1\subject1\' timestr];  
-    vr.logger           = ExperimentLogMin(filePath);
+    vr.logger           = ExperimentLogVirmen(filePath);
   end
   
   vr.prevIndices = [0 0 0];

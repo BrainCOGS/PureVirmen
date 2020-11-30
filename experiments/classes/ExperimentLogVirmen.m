@@ -56,7 +56,7 @@
 %                       interval). If a finite savePerNTrials is specified,
 %                       the log object can be saved to disk in this call.
 
-classdef ExperimentLogMin < handle
+classdef ExperimentLogVirmen < handle
 
   %------- Constants
   properties (Constant)
@@ -67,26 +67,9 @@ classdef ExperimentLogMin < handle
     SENSOR_DATASIZE = 'int16';      % Data type specifier for raw sensor readout
     
     DEFAULT_PREALLOCSIZE  = 10000   % Default size of arrays to preallocate
-    PREALLOCATED_FIELDS   = {
-                              'position'      ...
-                            , 'velocity'      ...
-                            , 'sensorDots'    ...
-                            , 'collision'     ...
-                            , 'time'          ...
-                            }
     
     DEFAULT_PATH          = 'C:\Data\'
-    
-    POSITION_SAMPLE       = nan(0, numel(ExperimentLogMin.SPATIAL_COORDS), 'single');
-    VELOCITY_SAMPLE       = nan(0, numel(ExperimentLogMin.SPATIAL_COORDS), 'single');
-    SENSORDOTS_SAMPLE     = zeros(0, numel(ExperimentLogMin.SENSOR_COORDS), ExperimentLogMin.SENSOR_DATASIZE);
-    
-    TRAIL_COMM_SAMPLE     = struct('position',   ExperimentLogMin.POSITION_SAMPLE, ...
-                                   'velocity',   ExperimentLogMin.VELOCITY_SAMPLE, ...
-                                   'sensorDots', ExperimentLogMin.SENSORDOTS_SAMPLE);  
-               
-    TRAIL_COMM_SAMPLE_STRUCT_MAP = ...
-        comm.utility.get_struct_map(ExperimentLogMin.TRAIL_COMM_SAMPLE)                      
+                     
   end
   
   %------- Private data
@@ -94,6 +77,7 @@ classdef ExperimentLogMin < handle
     trialInfo                       % Storage structure for per-trial info
     emptyTrial                      % Preallocated storage structure for per-trial info
     preallocSize                    % Size of arrays to preallocate
+    fieldInfo                       % Information for each field to be stored by Virmen
   end
   
   %------- Public data
@@ -132,43 +116,35 @@ classdef ExperimentLogMin < handle
     end
     
     %----- Constructor
-    function obj = ExperimentLogMin(logPath)
+    function obj = ExperimentLogVirmen(logPath, fieldInfo)
 
-      obj.preallocSize      = ExperimentLogMin.DEFAULT_PREALLOCSIZE;
+      obj.preallocSize        = ExperimentLogVirmen.DEFAULT_PREALLOCSIZE;
       obj.savePerNTrials      = 1;
       obj.writeCounter        = 0;
       
       %Logfile path, C:\Data\USERID\SUBJECTID\DATE_session
       obj.logFile             = fullfile(obj.DEFAULT_PATH, logPath);
       
-      % Data automatically collected from ViRMEn
-      obj.trialInfo.block     = uint32(0);
-      obj.trialInfo.trial     = uint32(0);
-      obj.trialInfo.viStart   = uint32(0);
-      obj.trialInfo.start     = nan;
-      obj.trialInfo.position  = ExperimentLogMin.POSITION_SAMPLE;
-      obj.trialInfo.velocity  = ExperimentLogMin.VELOCITY_SAMPLE;
-      obj.trialInfo.sensorDots= ExperimentLogMin.SENSORDOTS_SAMPLE;
-      obj.trialInfo.collision = false(0);
-      obj.trialInfo.time      = nan(0);
-      obj.trialInfo.iterations= uint32(0);
-      obj.trialInfo.duration  = 0;
+      %Which fields are going to be stored by virmen
+      %fieldInfo = VirmenBControl.field_definition.TowersTaskFields;
+      trial_fields = fieldInfo.trial_fields;
+      obj.fieldInfo = trial_fields(trial_fields.virmen_or_bcontrol == 'virmen' | ...
+                                   trial_fields.virmen_or_bcontrol == 'both', :);
+      
+      %Create an empty trial with fieldInfo table
+      obj.emptyTrial = struct();
+      for i=1:length(obj.fieldInfo.field_name)
+          curr_field = obj.fieldInfo.field_name{i};
+          curr_value = obj.fieldInfo.default_value{i};
+          obj.emptyTrial.(curr_field) = curr_value;
+      end
       
       % Preallocated storage structure for logging current trial
-      obj.emptyTrial          = obj.trialInfo;
-      for field = ExperimentLogMin.PREALLOCATED_FIELDS
-        if islogical(obj.emptyTrial.(field{:}))
-          obj.emptyTrial.(field{:})                         ...
-              = false ( obj.preallocSize                    ...
-                      , size(obj.emptyTrial.(field{:}),2)   ...
-                      );
-        else
-          obj.emptyTrial.(field{:})                         ...
-              = zeros ( obj.preallocSize                    ...
-                      , size(obj.emptyTrial.(field{:}),2)   ...
-                      , 'like', obj.emptyTrial.(field{:})   ...
-                      );
-        end
+      prealloc_fields = obj.fieldInfo{obj.fieldInfo.prealloc_field == 1, 'field_name'};
+      obj.emptyTrial_prealloc = struct();
+      for i = 1:length(prealloc_fields)
+          curr_field = prealloc_fields{i};
+        obj.emptyTrial_prealloc.(curr_field) = repmat(obj.emptyTrial.(curr_field),1, obj.preallocSize);    
       end
       
       %ALS Create session structure to fill trials in it
@@ -184,7 +160,6 @@ classdef ExperimentLogMin < handle
     function newTrial(obj)
       
       obj.writeIndex            = 0;
-      obj.session(end+1).block  = 1;
       obj.session(end).trial    = obj.writeIndex;
         
     end
@@ -197,8 +172,8 @@ classdef ExperimentLogMin < handle
 
       % If it exists, truncate unused preallocated space for the last trial
       if obj.writeIndex > 0 && ~isnan(obj.currentTrial.duration)
-        obj.currentTrial.time(obj.currentIt+1:end,:)        = [];
-        obj.currentTrial.sensorDots(obj.currentIt+1:end,:)  = [];
+        obj.currentTrial.trial_time(obj.currentIt+1:end,:)        = [];
+        obj.currentTrial.sensor_dots(obj.currentIt+1:end,:)  = [];
         obj.currentTrial.duration                           = timeNow - obj.currentTrial.start;
         obj.session(end)                                    = obj.currentTrial;  
         obj.newTrial();
@@ -215,30 +190,29 @@ classdef ExperimentLogMin < handle
     end
     
     %----- To be called at the start of each trial to store the time
-    function prevTrialDuration = logStart(obj, vr)
+    function logStart(obj, vr)
       
       % Record duration of the *previous* trial including inter-trial interval 
-      if obj.writeIndex > 0
-        prevTrialDuration         = vr.timeElapsed - obj.currentTrial.start;
+      %if obj.writeIndex > 0
+      %  prevTrialDuration         = vr.timeElapsed - obj.currentTrial.start;
         
         % Have to store the trial info again because extra info can have
         % been logged in the ITI
-        obj.currentTrial.time(obj.currentIt+1:end,:)        = [];
-        obj.currentTrial.sensorDots(obj.currentIt+1:end,:)  = [];
-        obj.currentTrial.duration                           = prevTrialDuration;
-      else
-        prevTrialDuration         = nan;
-      end
+      %  obj.currentTrial.trial_time(obj.currentIt+1:end,:)        = [];
+      %  obj.currentTrial.sensor_dots(obj.currentIt+1:end,:)  = [];
+      %  obj.currentTrial.duration                           = prevTrialDuration;
+      %else
+      %  prevTrialDuration         = nan;
+      %end
               
       % Proceed to next write
       obj.writeIndex              = obj.writeIndex + 1;
       obj.trialEnded              = 0;
-      obj.currentTrial            = obj.emptyTrial;
+      obj.currentTrial            = obj.emptyTrial_prealloc;
       obj.currentIt               = 0;
       
       % Initialize movement logging
-      obj.currentTrial.start      = vr.timeElapsed;
-      obj.currentTrial.viStart    = uint32(vr.iterations); 
+      obj.currentTrial.vi_start    = uint32(vr.iterations); 
     end
     
     %----- To be called during behavior to record position and velocity
@@ -252,14 +226,14 @@ classdef ExperimentLogMin < handle
       obj.currentIt       = obj.currentIt + 1;
 
       % These continue to be stored even during the inter-trial interval
-      obj.currentTrial.time(obj.currentIt,1)          = vr.timeElapsed - obj.currentTrial.start;
+      obj.currentTrial.trial_time(obj.currentIt,1)          = vr.timeElapsed - obj.currentTrial.start;
       if nargin > 2 && ~isempty(sensorDots)
-        obj.currentTrial.sensorDots(obj.currentIt,:)  = sensorDots(ExperimentLogMin.SENSOR_COORDS);
+        obj.currentTrial.sensor_dots(obj.currentIt,:)  = sensorDots(ExperimentLogVirmen.SENSOR_COORDS);
       end
       
       if obj.trialEnded <= 1      % Should log the final position at end of trial
-        obj.currentTrial.position(obj.currentIt,:)    = vr.position(ExperimentLogMin.SPATIAL_COORDS);
-        obj.currentTrial.velocity(obj.currentIt,:)    = vr.velocity(ExperimentLogMin.SPATIAL_COORDS);
+        obj.currentTrial.position(obj.currentIt,:)    = vr.position(ExperimentLogVirmen.SPATIAL_COORDS);
+        obj.currentTrial.velocity(obj.currentIt,:)    = vr.velocity(ExperimentLogVirmen.SPATIAL_COORDS);
         obj.currentTrial.collision(obj.currentIt,1)   = vr.collision;
         if obj.trialEnded == 1
           obj.trialEnded  = obj.trialEnded + 1;
@@ -287,15 +261,19 @@ classdef ExperimentLogMin < handle
     function trial = getTrialSendComm(obj)
         % Get trial to send by tcp at the end of trial
         
-          % Get trial sample
-          trial = ExperimentLogMin.TRAIL_COMM_SAMPLE;
-          % Which fields to copy and what size
-          fields = fieldnames(trial);
-          size_trial = size(obj.currentTrial.position,1) -1;
-          %Form new structure
-          for i=1:length(fields)
-            trial.(fields{i}) = obj.currentTrial.(fields{i})(1:size_trial, :);
+          % Check if currentTrial has all fields corresponding to Virmen
+          field_complete_trial = obj.fieldInfo.field_name;
+          fields_curr_trial    = fieldnames(obj.currentTrial);
+          
+          %If there are missing fields, send a warning and complete trial with default values
+          missing_fields = setdiff(field_complete_trial, fields_curr_trial);
+          if ~isempty(missing_fields)
+              warning(['Next fields were not set to current trial:  ' sprintf([newline '%s'] ,a{:})])
+              obj.currentTrial = cat_struct(obj.currentTrial, obj.emptyTrial);
           end
+          
+          trial = obj.currentTrial;
+          
     end
     
     %----- To be called at the end of each trial to handle blocking input
@@ -307,8 +285,24 @@ classdef ExperimentLogMin < handle
       end
 
       % Duration is saved in case there is no next trial
-      obj.currentTrial.duration = vr.timeElapsed - obj.currentTrial.start;
+      %obj.currentTrial.duration = vr.timeElapsed - obj.currentTrial.start;
+      %Get missing fields from vr
+      
+      % cue onset and offset logs
+      obj.currentTrial.cue_onset_left     = vr.cueOnset{Choice.L};
+      obj.currentTrial.cue_onset_right    = vr.cueOnset{Choice.R};
+      obj.currentTrial.cue_offset_left    = vr.cueOffset{Choice.L};
+      obj.currentTrial.cue_offset_right   = vr.cueOffset{Choice.R};
 
+      % Entry to regions log
+      obj.currentTrial.i_cue_entry        = vr.iCueEntry;
+      obj.currentTrial.i_mem_entry        = vr.iMemEntry;
+      obj.currentTrial.i_turn_entry       = vr.iTurnEntry;
+      obj.currentTrial.i_arm_entry        = vr.iArmEntry;
+      obj.currentTrial.i_blank            = vr.iBlank;
+      
+      obj.currentTrial.excess_travel      = vr.excessTravel;
+      
       % If a specified number of trials has elapsed, write to disk
       obj.writeCounter    = obj.writeCounter + 1;
       if obj.writeCounter >= obj.savePerNTrials
@@ -331,7 +325,7 @@ classdef ExperimentLogMin < handle
     %----- Returns the length of the trial (so far, and not including
     %      inter-trial interval)
     function length = trialLength(obj)
-      length  = obj.currentTrial.time(min( end, size(obj.currentTrial.position,1) ));
+      length  = obj.currentTrial.trial_time(min( end, size(obj.currentTrial.position,1) ));
     end
     
     %----- Compute the total distance logged

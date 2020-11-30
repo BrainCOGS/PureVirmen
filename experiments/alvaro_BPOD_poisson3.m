@@ -22,7 +22,8 @@ function vr = initializationCodeFun(vr)
 comm.close_all_comm();
 
 %Initialize Serial Module BPOD
-vr.BpodMod = PCBPODModule('COM7');
+vr.BpodMod = PCBPODModule('COM3');
+event = vr.BpodMod.readEvent()
 
 % Initialize tcp comm with Bcontrol
   vr.tcp_client = comm.tcp.initialize_tcp( ...
@@ -45,7 +46,7 @@ vr.BpodMod = PCBPODModule('COM7');
 
 %vr.virmen_structures.trainee_file.mainMazeID = 4;
 
-vr.exper.userdata.trainee = vr.virmen_structures.trainee_file;
+vr.exper.userdata.trainee = vr.virmen_structures.trainee;
 
 % Number and sequence of trials, reward level etc.
 vr    = VirmenTowersSetup.setupTrials(vr);
@@ -56,7 +57,7 @@ if RigParameters.hasDAQ
 end
 
 % Standard communications lines for VR rig
-vr    = initializeVRRig(vr, vr.exper.userdata.trainee);
+vr    = initializeVRRig(vr, vr.virmen_structures.protocol_file);
 
 %****** DEBUG DISPLAY ******
 vr = VirmenTowersSetup.debugDisplaySetup(vr);
@@ -208,19 +209,17 @@ try
             case BehavioralState.ChoiceMade
                 
                 % Log the end of the trial
-                vr.excessTravel = vr.logger.distanceTraveled() / vr.mazeLength - 1;
+                position_vec = vr.logger.currentTrial.position(1:vr.logger.iterationStamp(), :);
+                vr.excessTravel = calculateExcessTravel(...
+                                        distanceTraveled(position_vec), vr.mazeLength);
                 vr.logger.logEnd();
-                tic
+                
                 trial_comm = vr.logger.getTrialSendComm();
-                toc
+                trial_bin = virmen_utils.struct2binary(trial_comm); 
+                comm.tcp.send_binary_mat_file(vr.tcp_client, trial_bin)
+                
                 %Send info from past trial
-                
-                tic
-                struct_map = ExperimentLogMin.TRAIL_COMM_SAMPLE_STRUCT_MAP;
-                comm.tcp.send_array_structure( ...
-                    vr.tcp_client, trial_comm, struct_map);
-                toc
-                
+                                
                 % Handle reward/punishment and end of trial pause
                 %ALS, this is done in BControl
                 vr.state      = BehavioralState.EndOfTrial;
