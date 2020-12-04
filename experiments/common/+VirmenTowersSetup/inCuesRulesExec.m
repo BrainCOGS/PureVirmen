@@ -2,10 +2,10 @@ function [ vr ] = inCuesRulesExec( vr )
 %inMemoryRulesExec Summary of this function goes here
 %Code executed when subject is inside Cue Region PoissonTowers
 
-if vr.iCueEntry < 1
-    vr.BpodMod.sendEvent(3);
-    vr.iCueEntry      = vr.iterFcn(vr.logger.iterationStamp());
-end
+% if vr.iCueEntry < 1
+%     vr.BpodMod.sendEvent(3);
+%     vr.iCueEntry      = vr.iterFcn(vr.logger.iterationStamp());
+% end
 
 % Cues are triggered only when animal is facing forward
 if abs(angleMPiPi(vr.position(end))) < pi/2

@@ -4,8 +4,8 @@ function vr = computeWorld(vr)
 
   % Modify the ViRMen world to the specifications of the given maze; sets
   % vr.mazeID to the given mazeID
-  [vr,lCue]       = VirmenTowersSetup.configureMaze(vr, vr.mazeID, vr.mainMazeID);
-  stimParameters  = VirmenTowersSetup.getStimParameters(vr);
+  [vr,~]           = VirmenTowersSetup.configureMaze(vr, vr.mazeID, vr.mainMazeID);
+  %stimParameters  = VirmenTowersSetup.getStimParameters(vr);
   vr.mazeLength             = vr.lStart                                   ...
                             - vr.worlds{vr.currentWorld}.startLocation(2) ...
                             + vr.lCue                                     ...
@@ -22,7 +22,7 @@ function vr = computeWorld(vr)
 
 
   %% ALS Get crossing of important landmarks
-  vr                         = VirmenTowersSetup.getCrossingsMaze(vr);
+  vr.virmen_structures.regions = VirmenTowersSetup.getCrossingsMaze(vr, vr.virmen_structures.regions);
 
 
   %% Indices of left/right turn cues

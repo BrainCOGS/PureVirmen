@@ -5,8 +5,7 @@ function vr = setupTrials(vr)
   vr    = VirmenTowersSetup.initializeGradedExperiment(vr);
 
   %Read virmen_structures communicated from BControl
-  [mazes, criteria, globalSettings, vr] = ...
-      VirmenTowersSetup.readVirmenStructures(vr);
+  [mazes, criteria, globalSettings, vr] = VirmenTowersSetup.readVirmenStructures(vr);
   
   %Processes the definition for a sequence of progressively more difficult mazes.
   vr  = VirmenTowersSetup.prepareMazes(vr, mazes, criteria, globalSettings);
@@ -35,8 +34,13 @@ function vr = setupTrials(vr)
   if ~vr.experimentEnded
     %ALS, just for now a path to save log
     timestr = datestr(now(), 'YYYY-mm-dd HH_MM');
-    filePath = ['user1\subject1\' timestr];  
-    vr.logger           = ExperimentLogVirmen(filePath);
+    filePath  = ['user1\subject1\' timestr];  
+    
+    % Table with all field info for Towers Task
+    fieldInfo = VirmenBControl.field_definition.TowersTaskFields;
+    
+    %Define object to log data
+    vr.logger           = ExperimentLogVirmen(filePath, fieldInfo);
   end
   
   vr.prevIndices = [0 0 0];

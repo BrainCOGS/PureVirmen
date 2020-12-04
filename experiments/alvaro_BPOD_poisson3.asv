@@ -168,7 +168,19 @@ try
                     %case  Region.Violation
                         %vr.BpodMod.sendEvent(10);
                     %    vr = VirmenTowersSetup.violationRulesExec(vr);
+                        
+                        % Check if animal has entered a choice region after it has entered an arm
 
+                        
+
+                        
+                        % Check if animal has entered the turn region after the memory period
+
+                        
+                       
+                    %case Region2.InMemoryZero
+                    %    vr = VirmenTowersSetup.inMemory0RulesExec(vr);
+                        
                         % If still in the start region, do nothing
                     case Region2.InStart
                         vr = VirmenTowersSetup.inStartRulesExec(vr);
@@ -179,19 +191,16 @@ try
                         
                          % Check if animal has entered the memory region after the cue period
                     case Region2.InMemory
-                        vr = VirmenTowersSetup.inMemoryRulesExec(vr);   
-                        
-                     %case Region2.InMemoryZero
-                    %    vr = VirmenTowersSetup.inMemory0RulesExec(vr);
+                        vr = VirmenTowersSetup.inMemoryRulesExec(vr);    
                      
                     % Check if animal has entered the T-maze arms after the turn region
                     case Region2.InTurn
                         vr = VirmenTowersSetup.inTurnRulesExec(vr); 
                         
-                     % Check if animal has entered a choice region after it has entered an arm   
                     case Region2.InArms
                         vr = VirmenTowersSetup.inArmRulesExec(vr);
-                                       
+                        
+                                             
                     case Region2.InChoiceL
                         vr.choice = Choice.L;
                         vr.state  = BehavioralState.ChoiceMade;

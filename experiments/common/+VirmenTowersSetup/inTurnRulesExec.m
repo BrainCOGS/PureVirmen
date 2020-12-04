@@ -4,10 +4,10 @@ function [ vr ] = inTurnRulesExec( vr )
 
 
 
-if isPastCrossing(vr.cross_arms, vr.position)
-    %vr.BpodMod.sendEvent(6);
-    vr.iArmEntry      = vr.iterFcn(vr.logger.iterationStamp());
-end
+% if isPastCrossing(vr.cross_arms, vr.position)
+%     vr.BpodMod.sendEvent(6);
+%     vr.iArmEntry      = vr.iterFcn(vr.logger.iterationStamp());
+% end
 
 end
 

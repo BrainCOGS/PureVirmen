@@ -1,7 +1,9 @@
-function [ vr, region_struct] = getCrossingsMaze(vr, region_struct)
+function [ vr ] = getCrossingsMaze(vr, region_struct)
 % function that calls getCrossingLine for many different landmarks
 
 region_table = region_struct.region_table;
+
+region_table.cross = nan(size(region_table,1),1);
 
 for i=1:size(region_table,1)
 
@@ -20,6 +22,6 @@ for i=1:size(region_table,1)
   %vr.cross_arms             = getCrossingLine(vr, {'armsFloor'}  , 2, @min);
 end
 
-region_struct.region_table = region_table;
+region_struct.region_table = region_table
 
 
