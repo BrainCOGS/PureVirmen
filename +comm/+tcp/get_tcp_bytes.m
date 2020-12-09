@@ -1,4 +1,4 @@
-function [ bytes ] = tcp_get_bytes( tcp_client, bytes_read )
+function [ bytes ] = get_tcp_bytes( tcp_client, bytes_read )
 % Get how many bytes are going to be sent in next package
 %
 % Inputs

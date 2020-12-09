@@ -3,19 +3,36 @@ function [region, region_changed, region_struct] = getRegionMaze(vr, current_reg
 
 region                       = current_region;
 region_changed               = false;
-region_table                 = vr.region_struct.region_table;
-region_struct.region_table   = region_table;
+region_struct                = vr.virmen_structures.regions;
+region_table                 = region_struct.region_table;
 
-for i=current_region+1:size(region_table,1)
+% for i=current_region+1:size(region_table,1)
+%     
+%     if(isPastCrossing(region_table{i,'cross'}{:}, vr.position))
+%         region_table{i, 'entry'} = vr.iterFcn(vr.logger.iterationStamp()); 
+%         region_changed = true;
+%         region = Region2(i);
+%         vr.BpodMod.sendEvent(i);
+%         region_struct.region_table   = region_table;
+%         break;
+%     end
+% end
+
+last_region_crossed = current_region;
+for i=1:size(region_table,1)
     
-    if(isPastCrossing(region_table{i,'cross'}, vr.position))
-        region_table{i, 'entry'} = vr.iterFcn(vr.logger.iterationStamp()); 
-        region_changed = true;
-        region = Region2(i);
-        vr.BpodMod.sendEvent(i);
-        region_struct.region_table   = region_table;
-        break;
+    if(isPastCrossing(region_table{i,'cross'}{:}, vr.position))
+        last_region_crossed = i;
     end
+
+end
+
+if last_region_crossed ~= current_region
+    region_table{last_region_crossed, 'entry'} = vr.iterFcn(vr.logger.iterationStamp()); 
+    region_changed = true;
+    region = Region2(last_region_crossed);
+    vr.BpodMod.sendEvent(last_region_crossed);
+    region_struct.region_table   = region_table;
 end
 
 

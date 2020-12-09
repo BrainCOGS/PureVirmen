@@ -303,11 +303,11 @@ classdef ExperimentLogVirmen < handle
       obj.currentTrial.cue_offset_right   = vr.cueOffset{Choice.R};
 
       % Entry to regions log
-      region_table = vr.virmen_structures.region_struct.regions.region_table;
-      obj.currentTrial.i_cue_entry        = region_table{Region2.InCue, 'entry'}; %vr.iCueEntry;
+      region_table = vr.virmen_structures.regions.region_table;
+      obj.currentTrial.i_cue_entry        = region_table{Region2.InCues, 'entry'}; %vr.iCueEntry;
       obj.currentTrial.i_mem_entry        = region_table{Region2.InMemory, 'entry'};
       obj.currentTrial.i_turn_entry       = region_table{Region2.InTurn, 'entry'};
-      obj.currentTrial.i_arm_entry        = region_table{Region2.InArm, 'entry'};
+      obj.currentTrial.i_arm_entry        = region_table{Region2.InArms, 'entry'};
       obj.currentTrial.i_blank            = vr.iBlank;
       
       obj.currentTrial.excess_travel      = vr.excessTravel;
