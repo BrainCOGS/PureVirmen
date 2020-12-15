@@ -8,9 +8,9 @@ for i=1:size(region_table,1)
   region_name = {[region_table{i, 'region_name'}{:} 'Floor']};
   crossing = getCrossingLine(vr, region_name, ...
                                  region_table{i, 'coordinate'}, ...
-                                 region_table{i, 'selector_function'}{:})
+                                 region_table{i, 'selector_function'}{:});
                              
-  region_table{i, 'cross'} = {crossing}                        
+  region_table{i, 'cross'} = {crossing};                        
 end
                                          
   % Mouse is considered to have made a choice if it enters one of these areas

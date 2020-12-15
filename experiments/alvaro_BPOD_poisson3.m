@@ -218,9 +218,12 @@ try
                 
                 % Log the end of the trial
                 position_vec = vr.logger.currentTrial.position(1:vr.logger.iterationStamp(), :);
-                vr.excessTravel = calculateExcessTravel(...
-                                        distanceTraveled(position_vec), vr.mazeLength);
-                
+                [vr.excessTravel, vr.lessMaxTravel] = calculateExcessTravel(...
+                                               distanceTraveled(position_vec), ...
+                                               vr.mazeLength, ...
+                                               vr.virmen_structures.protocl.maxExcessTravel);
+                                    
+                                             
                 % Store last variables to the currentTrial
                 vr.logger.logEnd();
                 vr.logger.logExtras(vr);

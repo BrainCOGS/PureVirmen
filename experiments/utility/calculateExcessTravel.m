@@ -1,4 +1,4 @@
-function excessTravel = calculateExcessTravel(distance, mazeLength)
+function [excessTravel, lessMaxTravel] = calculateExcessTravel(distance, mazeLength, maxTravel)
 % Calculate excess travel ratio by subject in maze
 % Inputs
 % distance     = distance traveled by subject
@@ -8,6 +8,8 @@ function excessTravel = calculateExcessTravel(distance, mazeLength)
                  % 0 if subject travelled in straight line through the maze
                  
 excessTravel = (distance / mazeLength) - 1;
+
+lessMaxTravel = excessTravel <= maxTravel;
 
 
 end

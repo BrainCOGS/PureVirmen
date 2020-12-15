@@ -6,8 +6,6 @@ for iFloor = 1:numel(floorName)
         floorIndex      = vr.worlds{vr.currentWorld}.objects.indices.(floorName{iFloor});
         floor           = vr.exper.worlds{vr.currentWorld}.objects{floorIndex};
         
-        disp([floorName ' found ...................................'])
-        
         % Compute corners of the rectangle
         angle           = floor.rotation * pi/180;
         corner          = bsxfun( @plus                                   ...

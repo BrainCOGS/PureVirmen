@@ -297,10 +297,10 @@ classdef ExperimentLogVirmen < handle
       %Get missing fields from vr
       
       % cue onset and offset logs
-      obj.currentTrial.cue_onset_left     = vr.cueOnset{Choice.L};
-      obj.currentTrial.cue_onset_right    = vr.cueOnset{Choice.R};
-      obj.currentTrial.cue_offset_left    = vr.cueOffset{Choice.L};
-      obj.currentTrial.cue_offset_right   = vr.cueOffset{Choice.R};
+      obj.currentTrial.cue_onset_left     = {vr.cueOnset{Choice.L}};
+      obj.currentTrial.cue_onset_right    = {vr.cueOnset{Choice.R}};
+      obj.currentTrial.cue_offset_left    = {vr.cueOffset{Choice.L}};
+      obj.currentTrial.cue_offset_right   = {vr.cueOffset{Choice.R}};
 
       % Entry to regions log
       region_table = vr.virmen_structures.regions.region_table;
@@ -310,7 +310,9 @@ classdef ExperimentLogVirmen < handle
       obj.currentTrial.i_arm_entry        = region_table{Region2.InArms, 'entry'};
       obj.currentTrial.i_blank            = vr.iBlank;
       
+      % Distance traveled variables
       obj.currentTrial.excess_travel      = vr.excessTravel;
+      obj.currentTrial.less_max_travel    = vr.lessMaxTravel;
       
       % If a specified number of trials has elapsed, write to disk
       obj.writeCounter    = obj.writeCounter + 1;
@@ -329,22 +331,6 @@ classdef ExperimentLogVirmen < handle
     %----- Returns the start time of the current trial
     function start = trialStart(obj)
       start   = obj.currentTrial.trial_abs_start;
-    end
-    
-    %----- Returns the length of the trial (so far, and not including
-    %      inter-trial interval)
-    function length = trialLength(obj)
-      length  = obj.currentTrial.trial_time(min( end, size(obj.currentTrial.position,1) ));
-    end
-    
-    %----- Compute the total distance logged
-    function distance = distanceTraveled(obj)
-      if obj.currentIt > 0 && ~isempty(obj.currentTrial)
-        displacement  = diff(obj.currentTrial.position(1:obj.currentIt,1:2), 1);
-        distance      = sum( sqrt(sum(displacement.^2, 2)) );
-      else
-        distance      = 0;
-      end
     end
     
   end
