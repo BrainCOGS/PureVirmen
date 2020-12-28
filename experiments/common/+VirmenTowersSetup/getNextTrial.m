@@ -18,6 +18,8 @@ vr.nDistract = trial_structure.nDistract;
 vr.mazeID = trial_structure.mazeID;
 vr.mainMazeID = trial_structure.mainMazeID;
 
+vr.mazeChanged = trial_structure.mazeChanged;
+
 
 end
 

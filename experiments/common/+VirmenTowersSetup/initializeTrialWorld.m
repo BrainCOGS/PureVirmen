@@ -2,11 +2,11 @@
 function vr = initializeTrialWorld(vr)
 
   % ALS Get mazeChanged from BControl
-  mazeChanged = 1;
+ % vr.mazeChanged = 1;
   %vr.mazeID = 4;
 
-  if mazeChanged && vr.flagmazeChanged
-    vr.flagmazeChanged = 0;
+  if vr.mazeChanged
+    %vr.flagmazeChanged = 0;
     vr                      = VirmenTowersSetup.computeWorld(vr);
     
     % The recomputed world should remain invisible until after the ITI

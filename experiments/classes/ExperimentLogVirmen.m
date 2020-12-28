@@ -260,9 +260,9 @@ classdef ExperimentLogVirmen < handle
       obj.currentTrial.iterations = obj.currentIt + 1;    % Last point
       
       % The following variables are truncated before ITI
-      obj.currentTrial.position(obj.currentTrial.iterations+1:end,:)  = [];
-      obj.currentTrial.velocity(obj.currentTrial.iterations+1:end,:)  = [];
-      obj.currentTrial.collision(obj.currentTrial.iterations+1:end,:) = [];
+      obj.currentTrial.position(obj.currentTrial.iterations:end,:)  = [];
+      obj.currentTrial.velocity(obj.currentTrial.iterations:end,:)  = [];
+      obj.currentTrial.collision(obj.currentTrial.iterations:end,:) = [];
       
     end
     
@@ -311,8 +311,7 @@ classdef ExperimentLogVirmen < handle
       obj.currentTrial.i_blank            = vr.iBlank;
       
       % Distance traveled variables
-      obj.currentTrial.excess_travel      = vr.excessTravel;
-      obj.currentTrial.less_max_travel    = vr.lessMaxTravel;
+      obj.currentTrial.maze_length        = vr.mazeLength;
       
       % If a specified number of trials has elapsed, write to disk
       obj.writeCounter    = obj.writeCounter + 1;

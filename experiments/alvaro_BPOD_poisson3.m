@@ -23,7 +23,7 @@ comm.close_all_comm();
 
 %Initialize Serial Module BPOD
 vr.BpodMod = PCBPODModule('COM3');
-event = vr.BpodMod.readEvent()
+
 
 % Initialize tcp comm with Bcontrol
   vr.tcp_client = comm.tcp.initialize_tcp( ...
@@ -216,14 +216,7 @@ try
                 %========================================================================
             case BehavioralState.ChoiceMade
                 
-                % Log the end of the trial
-                position_vec = vr.logger.currentTrial.position(1:vr.logger.iterationStamp(), :);
-                [vr.excessTravel, vr.lessMaxTravel] = calculateExcessTravel(...
-                                               distanceTraveled(position_vec), ...
-                                               vr.mazeLength, ...
-                                               vr.virmen_structures.protocl.maxExcessTravel);
-                                    
-                                             
+                % Log the end of the trial                     
                 % Store last variables to the currentTrial
                 vr.logger.logEnd();
                 vr.logger.logExtras(vr);
