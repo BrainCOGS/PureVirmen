@@ -15,10 +15,10 @@ vr.trialType  = trial_structure.trialType;
 vr.nSalient = trial_structure.nSalient;
 vr.nDistract = trial_structure.nDistract;
 
-vr.mazeID = trial_structure.mazeID;
-vr.mainMazeID = trial_structure.mainMazeID;
-
-vr.mazeChanged = trial_structure.mazeChanged;
+vr.mazeID = trial_structure.maze_id;
+vr.mainMazeID = trial_structure.main_maze_id;
+vr.mazeChanged = trial_structure.maze_changed;
+vr.experimentEnded = trial_structure.experiment_ended;
 
 
 end

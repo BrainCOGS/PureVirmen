@@ -218,7 +218,7 @@ classdef ExperimentLogVirmen < handle
       obj.currentIt               = 0;
       
       % Initialize movement logging
-      obj.currentTrial.trial_abs_start = vr.timeElapsed;
+      %obj.currentTrial.trial_abs_start = vr.timeElapsed;
       obj.currentTrial.vi_start        = uint32(vr.iterations); 
       obj.currentTrial.trial_idx       = obj.writeIndex;
     end
