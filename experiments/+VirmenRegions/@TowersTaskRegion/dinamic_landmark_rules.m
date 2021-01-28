@@ -1,6 +1,7 @@
-function [ vr ] = dynamicLandmarksRulesExec( vr )
-%dynamicLandmarksRulesExec
+function vr = dinamic_landmark_rules( vr )
 % Code executed based on dynamic landmarks rules of protocol Poisson Towers
+% Input/Output
+% vr = virmen handle
 
 % Landmarks are triggered only when animal is facing forward
 if abs(angleMPiPi(vr.position(end))) < pi/2

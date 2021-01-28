@@ -1,7 +1,6 @@
-function [ vr ] = applyMotionBlurring( vr )
+function vr = motion_blurring_rules( vr )
 %applyMotionBlurring
 % Code executed based to apply motion blurring to objects Poisson Towers
-
 
 dy                      = vr.lastDP(2) + vr.dp(2);
 vr.lastDP               = vr.dp;

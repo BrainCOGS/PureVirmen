@@ -1,6 +1,7 @@
-function [ vr ] = inMemoryRulesExec( vr )
-%inMemoryRulesExec Summary of this function goes here
-%Code executed when subject is inside Memory Region PoissonTowers
+function vr = standard_memory_rules(vr)
+% Function to be performed on memory part of the maze
+% Input/Output
+% vr = virmen handle
 
 %Check for turn crossing
 % if isPastCrossing(vr.cross_turn, vr.position)

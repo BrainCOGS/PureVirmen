@@ -1,6 +1,7 @@
-function [ vr ] = timeBasedRulesExec( vr )
-%timeBasedRulesExec
+function vr = time_based_rules( vr )
 % Code executed based on time parameters of protocol Poisson Towers
+% Input/Output
+% vr = virmen handle
 
 % If a cue is already on, turn it off if enough time has elapsed
 for iSide = 1:numel(Choice.all())

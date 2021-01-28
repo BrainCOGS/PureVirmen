@@ -1,11 +1,7 @@
-function [ vr ] = inCuesRulesExec( vr )
-%inMemoryRulesExec Summary of this function goes here
-%Code executed when subject is inside Cue Region PoissonTowers
-
-% if vr.iCueEntry < 1
-%     vr.BpodMod.sendEvent(3);
-%     vr.iCueEntry      = vr.iterFcn(vr.logger.iterationStamp());
-% end
+function vr = standard_cue_rules( vr )
+% Function to be performed on cue part of the maze
+% Input/Output
+% vr = virmen handle
 
 % Cues are triggered only when animal is facing forward
 if abs(angleMPiPi(vr.position(end))) < pi/2
@@ -30,14 +26,6 @@ if abs(angleMPiPi(vr.position(end))) < pi/2
             vr.worlds{vr.currentWorld}.surface.visible(triangles) = true;
         end
         
-        %% If right side tower, deliver right side puff, else left side puff
-        if RigParameters.hasDAQ && vr.puffDuration > 0
-            if iSide == Choice.R
-                nidaqPulse3('ttl', vr.puffDuration);      %% puffDuration in ms, S. Bolkan uses 40ms
-            else
-                nidaqPulse4('ttl', vr.puffDuration);
-            end
-        end
     end
 end
 

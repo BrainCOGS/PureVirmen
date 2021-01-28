@@ -32,7 +32,6 @@ for iFloor = 1:numel(floorName)
             crossing(iFloor).sign       = sign(corner(1) - cross);
         end
     else
-        disp([floorName 'not found xxxxxxxxxxxxxxxxxxxxx'])
         crossing(iFloor).coordinate = coordinate;
         crossing(iFloor).crossing   = inf;
         crossing(iFloor).sign       = sign(1);

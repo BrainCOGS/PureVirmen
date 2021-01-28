@@ -31,6 +31,34 @@ function [vr] = drawCueSequenceMin(vr)
 
   % Reposition cues according to the drawn positions
   vr.pos_turnCue            = repmat(cueDisplacement, 1, size(vr.vtx_turnCue,2), 1);
+  
+  disp('vr.cuePos')
+  disp(vr.cuePos);
+  
+  disp('cueMinSeparation');
+  disp(str2double(vr.exper.variables.cueMinSeparation));
+  
+  disp('lCue')
+  disp(str2double(vr.mazes(1).variable.lCue))
+  
+  disp('vr.nCueSlots');
+  disp(vr.nCueSlots);
+  
+  disp('size(cueDisplacement)')
+  disp(size(cueDisplacement))
+  
+  disp('size(vr.vtx_turnCue,2)')
+  disp(size(vr.vtx_turnCue,2))
+  
+  disp('size(vr.pos_turnCue)')
+  disp(size(vr.pos_turnCue))
+  
+  disp('size(vr.template_turnCue)')
+  disp(size(vr.template_turnCue))
+  
+  disp('size(vr.vtx_turnCue)')
+  disp(size(vr.vtx_turnCue))
+  
   vr.worlds{vr.currentWorld}.surface.vertices(2,vr.vtx_turnCue) ...
                             = vr.template_turnCue(:) + vr.pos_turnCue(:);
 

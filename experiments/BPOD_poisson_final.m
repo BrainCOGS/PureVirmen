@@ -1,4 +1,4 @@
-function code = alvaro_BPOD_poisson3
+function code = BPOD_poisson_final
 % poisson_towers   Code for the ViRMEn experiment poisson_towers.
 %   code = poisson_towers   Returns handles to the functions that ViRMEn
 %   executes during engine initialization, runtime and termination.
@@ -9,10 +9,7 @@ code.runtime        = @runtimeCodeFun;
 code.termination    = @terminationCodeFun;
 % End header code - DO NOT EDIT
 
-%code.setup          = @setupTrials;
-
 end
-
 
 %_________________________________________________________________________
 % --- INITIALIZATION code: executes before the ViRMEn engine starts.
@@ -24,7 +21,6 @@ comm.close_all_comm();
 %Initialize Serial Module BPOD
 vr.BpodMod = PCBPODModule('COM3');
 
-
 % Initialize tcp comm with Bcontrol
   vr.tcp_client = comm.tcp.initialize_tcp( ...
       VirmenCommParameters.ipAddressBControl, ...
@@ -35,17 +31,6 @@ vr.BpodMod = PCBPODModule('COM3');
   pause(0.5);
   vr.virmen_structures = comm.virmen_specific.get_all_virmen_vars(vr.tcp_client);
   
-%Code when we want to test it alone...  
-%save('C:\Users\BrainCogs_Projects\ViRMEn_BPOD\+virmen_utils\virmen_structures_test.mat', ...
-%   'virmen_structures');
-% test_virmen_struct = load('C:\Users\BrainCogs_Projects\ViRMEn_BPOD\+virmen_utils\virmen_structures_test.mat');
-% test_virmen_struct.virmen_structures.protocol_file = ...
-%     virmen_utils.get_protocol_hniehE65_20180202();
-%vr.virmen_structures = test_virmen_struct.virmen_structures;
-
-
-%vr.virmen_structures.trainee_file.mainMazeID = 4;
-
 vr.exper.userdata.trainee = vr.virmen_structures.trainee;
 
 % Number and sequence of trials, reward level etc.
@@ -153,13 +138,18 @@ try
                 vr.trial_region_idx   = 1;
                 vr.current_rules      = vr.virmen_structures.regions.region_table{vr.trial_region_idx, 'rules'};
                 vr.state              = BehavioralState.WithinTrial;
-                vr.act_comm = true;
+                vr.act_comm           = true;
                 vr                    = teleportToStart(vr);
                 
                 
                 %========================================================================
             case BehavioralState.WithinTrial
                 
+                
+                if isViolationTrial(vr)
+                    s = 0;
+                    
+                else
                 % Get region changes
                 [vr.region_changed, vr.trial_region_idx]  = ...
                     VirmenTowersSetup.getRegionMaze(...
@@ -175,57 +165,8 @@ try
                 
                 apply_rules(vr.current_rules, vr);
                 
-                
-                
-                switch vr.trial_region_idx
-                    % Check if animal has met the trial violation criteria
-                    %case  Region.Violation
-                        %vr.BpodMod.sendEvent(10);
-                    %    vr = VirmenTowersSetup.violationRulesExec(vr);
-
-                        % If still in the start region, do nothing
-                    case Region2.InStart
-                        vr = VirmenTowersSetup.inStartRulesExec(vr);
-                        
-                        % If in the cue region, make cues visible when the animal is close enough
-                    case Region2.InCues
-                        vr = VirmenTowersSetup.inCuesRulesExec(vr);
-                        
-                         % Check if animal has entered the memory region after the cue period
-                    case Region2.InMemory
-                        vr = VirmenTowersSetup.inMemoryRulesExec(vr);   
-                        
-                     %case Region2.InMemoryZero
-                    %    vr = VirmenTowersSetup.inMemory0RulesExec(vr);
-                     
-                    % Check if animal has entered the T-maze arms after the turn region
-                    case Region2.InTurn
-                        vr = VirmenTowersSetup.inTurnRulesExec(vr); 
-                        
-                     % Check if animal has entered a choice region after it has entered an arm   
-                    case Region2.InArms
-                        vr = VirmenTowersSetup.inArmRulesExec(vr);
-                                       
-                    case Region2.InChoiceL
-                        vr.choice = Choice.L;
-                        vr.state  = BehavioralState.ChoiceMade;
-                        
-                    case Region2.InChoiceR
-                        vr.choice = Choice.R;
-                        vr.state  = BehavioralState.ChoiceMade;
                 end
                 
-                % Time-based visibility controls
-                vr = VirmenTowersSetup.timeBasedRulesExec(vr);
-                
-                % Dynamic sky colors
-                vr = VirmenTowersSetup.dynamicSkyRulesExec(vr);
-                
-                % Dynamic landmarks
-                vr = VirmenTowersSetup.dynamicLandmarksRulesExec(vr);
-                
-                % Apply motion blurring to cues
-                vr = VirmenTowersSetup.applyMotionBlurring(vr);
                 
                 %========================================================================
             case BehavioralState.ChoiceMade
@@ -243,10 +184,6 @@ try
                 % Handle reward/punishment and end of trial pause
                 %ALS, this is done in BControl
                 vr.state      = BehavioralState.EndOfTrial;
-                %vr = judgeVRTrial(vr);
-                
-                %vr.BpodMod.sendEvent(255);
-                %fwrite(vr.tcp_client, 255)
                 vr.act_comm = false;
                 
                 
@@ -281,13 +218,6 @@ try
     
     % IMPORTANT: Log position, velocity etc. at *every* iteration
     vr.logger.logTick(vr, vr.sensorData);
-    %vr.protocol.update();
-    
-    %vr = BPOD_signal_frames(vr);
-    %vr = comm.tcp.trial_tcp_data(vr);
-    
-    % Send DAQ signals for multi-computer synchronization
-    %updateDAQSyncSignals(vr.iterFcn(loggingIndices));
     
     %****** DEBUG DISPLAY ******
     if ~RigParameters.hasDAQ && ~RigParameters.simulationMode
