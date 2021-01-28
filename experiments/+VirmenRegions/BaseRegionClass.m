@@ -51,7 +51,7 @@ classdef BaseRegionClass < handle
             % rule_table   = table with region-rules relationship
             
             for i=1:size(rule_table,1)
-                obj.set_region_rules(obj, rule_table.region{i}, rule_table.rules{i})
+                obj.set_region_rules(rule_table.region{i}, rule_table.rules(i))
             end
         end
     end
