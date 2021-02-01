@@ -2,6 +2,13 @@ classdef BaseRegionClass < handle
     % Defines a table to name and configure all regions on a Virmen-BControl experiment 
     
     %------- Constants
+    properties (Abstract = true)
+        
+        REGION_TYPE
+        
+    end
+    
+    
     properties (Constant)
         
         REGION_PROPERTIES       = {'region_name', 'coordinate', ...
@@ -24,8 +31,11 @@ classdef BaseRegionClass < handle
         
         function struct_comm = get_struct_comm(obj)
             
+            
             struct_comm.region_table = obj.region_table;
             struct_comm.region_type  = obj.REGION_TYPE;
+            struct_comm.whole_trial_rules  = obj.whole_trial_rules;
+            
   
         end
         
