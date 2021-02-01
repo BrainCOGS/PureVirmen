@@ -24,14 +24,14 @@ classdef TowersTaskRegion < VirmenRegions.BaseRegionClass
             
             % User can modify this definitions
             % Defines properties for each one of the fields,
-            %_____________________________region_name__coordinate___selector_function___cross___entry__rules
-            region_table(end+1,:) = table({'start'},       {2},     {@min},            {NaN},   {NaN},  {''});
-            region_table(end+1,:) = table({'cue'},         {2},     {@min},            {NaN},   {NaN},  {''});
-            region_table(end+1,:) = table({'memory'},      {2},     {@min},            {NaN},   {NaN},  {''});
-            region_table(end+1,:) = table({'turn'},        {2},     {@min},            {NaN},   {NaN},  {''});
-            region_table(end+1,:) = table({'arms'},        {2},     {@min},            {NaN},   {NaN},  {''});
-            region_table(end+1,:) = table({'choiceL'},     {1},     {@minabs},         {NaN},   {NaN},  {''});
-            region_table(end+1,:) = table({'choiceR'},     {1},     {@minabs},         {NaN},   {NaN},  {''});
+            %_____________________________region_name__coordinate___selector_function___cross___entry__rules__rules_handles
+            region_table(end+1,:) = table({'start'},       {2},     {@min},            {NaN},   {NaN},  {''}, {''});
+            region_table(end+1,:) = table({'cue'},         {2},     {@min},            {NaN},   {NaN},  {''}, {''});
+            region_table(end+1,:) = table({'memory'},      {2},     {@min},            {NaN},   {NaN},  {''}, {''});
+            region_table(end+1,:) = table({'turn'},        {2},     {@min},            {NaN},   {NaN},  {''}, {''});
+            region_table(end+1,:) = table({'arms'},        {2},     {@min},            {NaN},   {NaN},  {''}, {''});
+            region_table(end+1,:) = table({'choiceL'},     {1},     {@minabs},         {NaN},   {NaN},  {''}, {''});
+            region_table(end+1,:) = table({'choiceR'},     {1},     {@minabs},         {NaN},   {NaN},  {''}, {''});
             
         end
         

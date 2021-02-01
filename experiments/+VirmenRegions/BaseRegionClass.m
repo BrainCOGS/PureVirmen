@@ -13,17 +13,18 @@ classdef BaseRegionClass < handle
         
         REGION_PROPERTIES       = {'region_name', 'coordinate', ...
             'selector_function', 'cross',  'entry', ...
-            'rules'};
+            'rules', 'rules_handles'};
         
         REGION_PROPERTIES_TYPE  = {'categorical',   'numeric',    ...
             'cell',              'cell' ,  'numeric', ...
-            'cell'};
+            'cell',  'cell'};
     end
     
     %------- Public data
     properties (SetAccess = protected, Transient)
         region_table
         whole_trial_rules
+        whole_trial_rules_handles
     end
     
     %________________________________________________________________________
@@ -31,10 +32,11 @@ classdef BaseRegionClass < handle
         
         function struct_comm = get_struct_comm(obj)
             
-            
-            struct_comm.region_table = obj.region_table;
-            struct_comm.region_type  = obj.REGION_TYPE;
-            struct_comm.whole_trial_rules  = obj.whole_trial_rules;
+            struct_comm = struct();
+            prop = properties(obj);
+            for i=1:length(prop)
+                struct_comm.(prop{i}) = obj.(prop{i});
+            end
             
   
         end
@@ -55,7 +57,8 @@ classdef BaseRegionClass < handle
             rules_list_handles = cellfun(@(x) str2func(strcat(class(obj), '.', x)), ...
             rules_list, 'UniformOutput', false);
             
-            obj.region_table{idx_region, 'rules'} = rules_list_handles;
+            obj.region_table{idx_region, 'rules'} = rules_list;
+            obj.region_table{idx_region, 'rules_handles'} = rules_list_handles;
             
         end
         
@@ -65,7 +68,9 @@ classdef BaseRegionClass < handle
             % rule_table   = table with region-rules relationship
             
             for i=1:size(rule_table,1)
-                obj.set_region_rules(rule_table.region{i}, rule_table.rules(i))
+                if ~isempty(rule_table.rules{i})
+                    obj.set_region_rules(rule_table.region{i}, rule_table.rules(i))
+                end
             end
         end
         
@@ -74,10 +79,43 @@ classdef BaseRegionClass < handle
             % Inputs
             % rules_list    = list of rules to apply during whole trial
             
-            obj.whole_trial_rules = cellfun(@(x) str2func(strcat(class(obj), '.', x)), ...
-                rules_list, 'UniformOutput', false);
+            obj.whole_trial_rules = rules_list;
+            
+            if ~isempty(rules_list{1})
+                obj.whole_trial_rules_handles = ...
+                    cellfun(@(x) str2func(strcat(class(obj), '.', x)), ...
+                    rules_list, 'UniformOutput', false);
+            end
             
         end
+        
+        function check_existance_rules(obj)
+            % Check if all functions defined for Regions exist on class
+  
+            %For all regions on the table
+            for i=1:length(obj.region_table.rules)
+                rule_region = obj.region_table.rules(i);
+                %For all rules on the region
+                for j=1:length(rule_region)
+                    ac_rule = rule_region{j};
+                    %Check if rule is method of object
+                    if ~isempty(ac_rule) && ~ismethod(obj, ac_rule)
+                        error([ac_rule ' is not a method of ' class(obj)])
+                    end
+                end
+            end
+            
+            %Check whole trial rules
+            for i=1:length(obj.whole_trial_rules)
+                trial_rule = obj.whole_trial_rules{i};
+                if ~ismethod(obj, trial_rule)
+                    error([trial_rule ' is not a method of ' class(obj)])
+                end
+            end
+                    
+            
+        end
+        
     end
         
     methods(Abstract = true)
