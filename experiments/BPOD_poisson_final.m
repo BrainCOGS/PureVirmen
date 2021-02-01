@@ -136,11 +136,11 @@ try
                 % (caching) of the world graphics makes the previous iteration take unusually long, in which
                 % case displacement is accumulated without the animal actually responding to anything.
                 vr.trial_region_idx   = 1;
-                vr.region_rules       = vr.virmen_structures.regions.region_table.rules(vr.trial_region_idx);
+                vr.region_rules       = vr.virmen_structures.regions.region_table.rules_handles(vr.trial_region_idx);
                 if isempty(vr.region_rules{1})
-                    vr.current_rules      = vr.virmen_structures.regions.whole_trial_rules;
+                    vr.current_rules      = vr.virmen_structures.regions.whole_trial_rules_handles;
                 else
-                    vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules];
+                    vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules_handles];
                 end
                 vr.state              = BehavioralState.WithinTrial;
                 vr.act_comm           = true;
@@ -166,15 +166,15 @@ try
                     vr.virmen_structures.regions.region_table.entry(vr.trial_region_idx) = ...
                         vr.iterFcn(vr.logger.iterationStamp());
                     vr.region_rules       = ...
-                        vr.virmen_structures.regions.region_table.rules(vr.trial_region_idx);
+                        vr.virmen_structures.regions.region_table.rules_handles(vr.trial_region_idx);
                     if isempty(vr.region_rules{1})
-                        vr.current_rules      = vr.virmen_structures.regions.whole_trial_rules;
+                        vr.current_rules      = vr.virmen_structures.regions.whole_trial_rules_handles;
                     else
-                        vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules];
+                        vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules_handles];
                     end
                 end
                 
-                VirmenRegions.apply_rules(vr, vr.current_rules);
+                vr = VirmenRegions.apply_rules(vr, vr.current_rules);
                 
                 end
                 
