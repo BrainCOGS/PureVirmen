@@ -21,17 +21,17 @@ region_table                 = region_struct.region_table;
 region_index = current_region;
 for i=1:size(region_table,1)
     
-    if(isPastCrossing(region_table{i,'cross'}{:}, vr.position))
+    if(isPastCrossing(region_table{i,'cross'}{:}, position))
         region_index = i;
     end
 
 end
 
-if last_region_crossed ~= current_region
+if region_index ~= current_region
     %region_table{last_region_crossed, 'entry'} = vr.iterFcn(vr.logger.iterationStamp()); 
     region_changed = true;
     %region = vr.Regions{last_region_crossed};
-    vr.BpodMod.sendEvent(last_region_crossed);
+    vr.BpodMod.sendEvent(region_index);
     %region_struct.region_table   = region_table;
 end
 

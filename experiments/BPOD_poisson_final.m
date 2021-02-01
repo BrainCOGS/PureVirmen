@@ -19,7 +19,7 @@ function vr = initializationCodeFun(vr)
 comm.close_all_comm();
 
 %Initialize Serial Module BPOD
-vr.BpodMod = PCBPODModule('COM3');
+vr.BpodMod = PCBPODModule('COM5');
 
 % Initialize tcp comm with Bcontrol
   vr.tcp_client = comm.tcp.initialize_tcp( ...
@@ -136,7 +136,8 @@ try
                 % (caching) of the world graphics makes the previous iteration take unusually long, in which
                 % case displacement is accumulated without the animal actually responding to anything.
                 vr.trial_region_idx   = 1;
-                vr.current_rules      = vr.virmen_structures.regions.region_table{vr.trial_region_idx, 'rules'};
+                vr.region_rules       = vr.virmen_structures.regions.region_table.rules(vr.trial_region_idx);
+                vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules];
                 vr.state              = BehavioralState.WithinTrial;
                 vr.act_comm           = true;
                 vr                    = teleportToStart(vr);
@@ -157,13 +158,14 @@ try
                 
                 % Save entry on region structure
                 if vr.region_changed
-                    vr.virmen_structures.regions.region_table{vr.trial_region_idx, 'entry'} = ...
+                    vr.virmen_structures.regions.region_table.entry(vr.trial_region_idx) = ...
                         vr.iterFcn(vr.logger.iterationStamp());
-                    vr.current_rules      = ...
-                        vr.virmen_structures.regions.region_table{vr.trial_region_idx, 'rules'};
+                    vr.region_rules       = ...
+                        vr.virmen_structures.regions.region_table.rules(vr.trial_region_idx);
+                    vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules];
                 end
                 
-                apply_rules(vr.current_rules, vr);
+                VirmenRegions.apply_rules(vr, vr.current_rules);
                 
                 end
                 

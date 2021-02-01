@@ -1,4 +1,4 @@
-function vr = dinamic_sky_rules( vr )
+function vr = dynamic_sky_rules( vr )
 % Code executed based on dynamic Sky Rules of protocol Poisson Towers
 % Input/Output
 % vr = virmen handle

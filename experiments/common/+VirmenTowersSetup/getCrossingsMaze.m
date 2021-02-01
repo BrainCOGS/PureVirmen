@@ -5,7 +5,7 @@ region_table = region_struct.region_table;
 
 for i=1:size(region_table,1)
 
-  region_name = {[region_table{i, 'region_name'}{:} 'Floor']};
+  region_name = {[char(region_table{i, 'region_name'}) 'Floor']};
   crossing = getCrossingLine(vr, region_name, ...
                                  region_table{i, 'coordinate'}, ...
                                  region_table{i, 'selector_function'}{:});

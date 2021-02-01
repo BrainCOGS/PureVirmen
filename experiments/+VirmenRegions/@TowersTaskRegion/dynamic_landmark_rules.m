@@ -1,4 +1,4 @@
-function vr = dinamic_landmark_rules( vr )
+function vr = dynamic_landmark_rules( vr )
 % Code executed based on dynamic landmarks rules of protocol Poisson Towers
 % Input/Output
 % vr = virmen handle

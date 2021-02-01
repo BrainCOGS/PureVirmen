@@ -16,7 +16,6 @@ classdef BaseRegionClass < handle
     %------- Public data
     properties (SetAccess = protected, Transient)
         region_table
-        whole_trial_rules
     end
     
     %________________________________________________________________________
@@ -30,7 +29,7 @@ classdef BaseRegionClass < handle
         end
         
         function set_region_rules(obj, region_name, rules_list)
-            % Set rule column (function handles) for a specific region name
+            % Set rule column for a specific region name
             % Inputs
             % region_name   = a string that matches a region 
             % rules_list    = list of rules to apply on that region
@@ -42,10 +41,9 @@ classdef BaseRegionClass < handle
                 return
             end
             
-            rules_list_handles = cellfun(@(x) str2func(strcat(class(obj), '.', x)), ...
-            rules_list, 'UniformOutput', false);
+            rules_list_handles = cellfun(@(x) str2func(strcat(class(obj), '.', x)), rules_list)
             
-            obj.region_table{idx_region, 'rules'} = rules_list_handles;
+            obj.region_table{idx_region, 'rules'} = rules_list;
             
         end
         
@@ -57,16 +55,6 @@ classdef BaseRegionClass < handle
             for i=1:size(rule_table,1)
                 obj.set_region_rules(rule_table.region{i}, rule_table.rules(i))
             end
-        end
-        
-        function set_whole_trial_rules(obj,rules_list)
-            % Set function handle list for rules during entire trial
-            % Inputs
-            % rules_list    = list of rules to apply during whole trial
-            
-            obj.whole_trial_rules = cellfun(@(x) str2func(strcat(class(obj), '.', x)), ...
-                rules_list, 'UniformOutput', false);
-            
         end
     end
         
