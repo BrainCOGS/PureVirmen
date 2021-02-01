@@ -51,8 +51,8 @@ classdef TowersTaskRegion < VirmenRegions.BaseRegionClass
         % Rules that are applied during all trial
         vr = motion_blurring_rules(vr);
         vr = time_based_rules(vr);
-        vr = dinamic_landmark_rules(vr);
-        vr = dinamic_sky_rules(vr);
+        vr = dynamic_landmark_rules(vr);
+        vr = dynamic_sky_rules(vr);
         
     end
 end

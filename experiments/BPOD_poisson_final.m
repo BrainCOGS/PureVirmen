@@ -137,7 +137,11 @@ try
                 % case displacement is accumulated without the animal actually responding to anything.
                 vr.trial_region_idx   = 1;
                 vr.region_rules       = vr.virmen_structures.regions.region_table.rules(vr.trial_region_idx);
-                vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules];
+                if isempty(vr.region_rules{1})
+                    vr.current_rules      = vr.virmen_structures.regions.whole_trial_rules;
+                else
+                    vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules];
+                end
                 vr.state              = BehavioralState.WithinTrial;
                 vr.act_comm           = true;
                 vr                    = teleportToStart(vr);
@@ -158,11 +162,16 @@ try
                 
                 % Save entry on region structure
                 if vr.region_changed
+                    vr.BpodMod.sendEvent(vr.trial_region_idx);
                     vr.virmen_structures.regions.region_table.entry(vr.trial_region_idx) = ...
                         vr.iterFcn(vr.logger.iterationStamp());
                     vr.region_rules       = ...
                         vr.virmen_structures.regions.region_table.rules(vr.trial_region_idx);
-                    vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules];
+                    if isempty(vr.region_rules{1})
+                        vr.current_rules      = vr.virmen_structures.regions.whole_trial_rules;
+                    else
+                        vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules];
+                    end
                 end
                 
                 VirmenRegions.apply_rules(vr, vr.current_rules);
