@@ -47,6 +47,7 @@ classdef TowersTaskRegion < VirmenRegions.BaseRegionClass
         vr = standard_turn_rules(vr);
         vr = standard_arm_rules(vr);
         vr = standard_violation_rules(vr);
+        vr = cue_onset_signal(vr);
         
         % Rules that are applied during all trial
         vr = motion_blurring_rules(vr);

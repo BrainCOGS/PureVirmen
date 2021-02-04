@@ -72,9 +72,7 @@ try
     %   if vr.waitTime ~= 0
     %     [vr.waitStart, vr.waitTime] = processWaitTimes(vr.waitStart, vr.waitTime);
     %   end
-    vr.prevState  = vr.state;
-    
-    
+
     % Forced termination, or else do epoch-specific things
     %if isinf(vr.protocol.endExperiment)
     %  vr.experimentEnded  = true;
@@ -90,13 +88,10 @@ try
                 % try to merge this step with StartOfTrial, animal motion can
                 % accumulate during initialization and result in an artifact where the
                 % animal is suddenly displaced forward upon start of world display.
-                
-                
+     
                 vr                    = VirmenTowersSetup.getNextTrial(vr);
                 vr                    = VirmenTowersSetup.initializeTrialWorld(vr);
-                %if vr.protocol.endExperiment == true
-                % Allow end of experiment only after completion of the last trial
-                %  vr.experimentEnded  = true;
+
                 if ~vr.experimentEnded
                     vr.state            = BehavioralState.InitializeTrial;
                     vr                  = teleportToStart(vr);
@@ -136,12 +131,8 @@ try
                 % (caching) of the world graphics makes the previous iteration take unusually long, in which
                 % case displacement is accumulated without the animal actually responding to anything.
                 vr.trial_region_idx   = 1;
-                vr.region_rules       = vr.virmen_structures.regions.region_table.rules_handles(vr.trial_region_idx);
-                if isempty(vr.region_rules{1})
-                    vr.current_rules      = vr.virmen_structures.regions.whole_trial_rules_handles;
-                else
-                    vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules_handles];
-                end
+                vr.current_rules = get_current_rules(vr.virmen_structures.regions, vr.trial_region_idx);
+                
                 vr.state              = BehavioralState.WithinTrial;
                 vr.act_comm           = true;
                 vr                    = teleportToStart(vr);
@@ -162,16 +153,14 @@ try
                 
                 % Save entry on region structure
                 if vr.region_changed
-                    vr.BpodMod.sendEvent(vr.trial_region_idx);
+                    VirmenRegions.send_region_signal(vr, vr.virmen_structures.signal_dict, ...
+                                     vr.virmen_structures.regions, vr.trial_region_idx);
+                                 
                     vr.virmen_structures.regions.region_table.entry(vr.trial_region_idx) = ...
                         vr.iterFcn(vr.logger.iterationStamp());
-                    vr.region_rules       = ...
-                        vr.virmen_structures.regions.region_table.rules_handles(vr.trial_region_idx);
-                    if isempty(vr.region_rules{1})
-                        vr.current_rules      = vr.virmen_structures.regions.whole_trial_rules_handles;
-                    else
-                        vr.current_rules      = [vr.region_rules vr.virmen_structures.regions.whole_trial_rules_handles];
-                    end
+                    
+                    vr.current_rules = get_current_rules(vr.virmen_structures.regions, vr.trial_region_idx);
+                
                 end
                 
                 vr = VirmenRegions.apply_rules(vr, vr.current_rules);

@@ -31,6 +31,9 @@ classdef BaseRegionClass < handle
     methods
         
         function struct_comm = get_struct_comm(obj)
+            %Set every property of object in a structure for communication purposes
+            % Output
+            % struct_comm = structure with all properties from object
             
             struct_comm = struct();
             prop = properties(obj);
