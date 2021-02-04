@@ -30,7 +30,7 @@ classdef TowersTaskRegion < VirmenRegions.BaseRegionClass
             region_table(end+1,:) = table({'memory'},      {2},     {@min},            {NaN},   {NaN},  {{''}}, {{''}});
             region_table(end+1,:) = table({'turn'},        {2},     {@min},            {NaN},   {NaN},  {{''}}, {{''}});
             region_table(end+1,:) = table({'arms'},        {2},     {@min},            {NaN},   {NaN},  {{''}}, {{''}});
-            region_table(end+1,:) = table({'choiceL'},     {1},     {@minabs},         {NaN},   {NaN},  {{''}}, {{''}};
+            region_table(end+1,:) = table({'choiceL'},     {1},     {@minabs},         {NaN},   {NaN},  {{''}}, {{''}});
             region_table(end+1,:) = table({'choiceR'},     {1},     {@minabs},         {NaN},   {NaN},  {{''}}, {{''}});
             
         end
