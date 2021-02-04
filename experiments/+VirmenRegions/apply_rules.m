@@ -5,6 +5,7 @@ function vr = apply_rules(vr, current_rules)
 % current_rules  = list of handles of functions to rules to apply
 
 % Go through all handles and call them
+
 for i=1:length(current_rules)
     
     ac_rule = current_rules{i};
