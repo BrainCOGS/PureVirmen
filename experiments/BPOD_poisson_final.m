@@ -131,7 +131,8 @@ try
                 % (caching) of the world graphics makes the previous iteration take unusually long, in which
                 % case displacement is accumulated without the animal actually responding to anything.
                 vr.trial_region_idx   = 1;
-                vr.current_rules = get_current_rules(vr.virmen_structures.regions, vr.trial_region_idx);
+                vr.current_rules = VirmenRegions.get_current_rules(...
+                    vr.virmen_structures.regions, vr.trial_region_idx);
                 
                 vr.state              = BehavioralState.WithinTrial;
                 vr.act_comm           = true;
@@ -153,13 +154,14 @@ try
                 
                 % Save entry on region structure
                 if vr.region_changed
-                    VirmenRegions.send_region_signal(vr, vr.virmen_structures.signal_dict, ...
+                    VirmenRegions.send_region_signal(vr, vr.virmen_structures.signal_dict.signal_dict_virmen, ...
                                      vr.virmen_structures.regions, vr.trial_region_idx);
                                  
                     vr.virmen_structures.regions.region_table.entry(vr.trial_region_idx) = ...
                         vr.iterFcn(vr.logger.iterationStamp());
                     
-                    vr.current_rules = get_current_rules(vr.virmen_structures.regions, vr.trial_region_idx);
+                    vr.current_rules = VirmenRegions.get_current_rules(...
+                        vr.virmen_structures.regions, vr.trial_region_idx);
                 
                 end
                 
