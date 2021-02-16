@@ -60,8 +60,8 @@ classdef BaseRegionClass < handle
             rules_list_handles = cellfun(@(x) str2func(strcat(class(obj), '.', x)), ...
             rules_list, 'UniformOutput', false);
             
-            obj.region_table{idx_region, 'rules'} = rules_list;
-            obj.region_table{idx_region, 'rules_handles'} = rules_list_handles;
+            obj.region_table{idx_region, 'rules'} =         {rules_list};
+            obj.region_table{idx_region, 'rules_handles'} = {rules_list_handles};
             
         end
         
@@ -71,8 +71,8 @@ classdef BaseRegionClass < handle
             % rule_table   = table with region-rules relationship
             
             for i=1:size(rule_table,1)
-                if ~isempty(rule_table.rules{i})
-                    obj.set_region_rules(rule_table.region{i}, rule_table.rules(i))
+                if ~isempty(rule_table.rules{i}{1})
+                    obj.set_region_rules(rule_table.region{i}, rule_table.rules{i})
                 end
             end
         end
@@ -97,7 +97,7 @@ classdef BaseRegionClass < handle
   
             %For all regions on the table
             for i=1:length(obj.region_table.rules)
-                rule_region = obj.region_table.rules(i);
+                rule_region = obj.region_table.rules{i};
                 %For all rules on the region
                 for j=1:length(rule_region)
                     ac_rule = rule_region{j};
