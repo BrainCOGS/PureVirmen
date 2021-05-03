@@ -1,4 +1,4 @@
-function code = ThreeCueZoneMaze_exp
+function code = ThreeCueZoneMaze_standalone_exp
 % poisson_towers   Code for the ViRMEn experiment poisson_towers.
 %   code = poisson_towers   Returns handles to the functions that ViRMEn
 %   executes during engine initialization, runtime and termination.
@@ -22,18 +22,22 @@ function vr = initializationCodeFun(vr)
 comm.close_all_comm();
 
 %Initialize Serial Module BPOD
-vr.BpodMod = PCBPODModule('COM4');
+%vr.BpodMod = PCBPODModule('COM4');
 
 
 % Initialize tcp comm with Bcontrol
-  vr.tcp_client = comm.tcp.initialize_tcp( ...
-      VirmenCommParameters.ipAddressBControl, ...
-      VirmenCommParameters.tcpClientPort, ...
-      VirmenCommParameters.networkRole, ...
-      VirmenCommParameters.outputBufferSize);
+%   vr.tcp_client = comm.tcp.initialize_tcp( ...
+%       VirmenCommParameters.ipAddressBControl, ...
+%       VirmenCommParameters.tcpClientPort, ...
+%       VirmenCommParameters.networkRole, ...
+%       VirmenCommParameters.outputBufferSize);
 
   pause(0.5);
-  vr.virmen_structures = comm.virmen_specific.get_all_virmen_vars(vr.tcp_client);
+  data = load('vr_presaved.mat');
+  
+  %vr.virmen_structures = comm.virmen_specific.get_all_virmen_vars(vr.tcp_client);
+  vr.virmen_structures = data.vr.virmen_structures;
+  vr.loaded_trial      = data.vr.complete_trial_info;
   
 %Code when we want to test it alone...  
 %save('C:\Users\BrainCogs_Projects\ViRMEn_BPOD\+virmen_utils\virmen_structures_test.mat', ...
@@ -49,7 +53,7 @@ vr.BpodMod = PCBPODModule('COM4');
 vr.exper.userdata.trainee = vr.virmen_structures.trainee;
 
 % Number and sequence of trials, reward level etc.
-vr    = VirmenTowersSetupNewCues.setupTrials(vr);
+vr    = VirmenTowersSetup.setupTrials(vr);
 
 % test motion detection
 if RigParameters.hasDAQ
@@ -60,7 +64,7 @@ end
 vr    = initializeVRRig(vr, vr.virmen_structures.protocol_file);
 
 %****** DEBUG DISPLAY ******
-vr = VirmenTowersSetupNewCues.debugDisplaySetup(vr);
+vr = VirmenTowersSetup.debugDisplaySetup(vr);
 
 vr.act_comm   = false;
 
@@ -107,8 +111,10 @@ try
                 % animal is suddenly displaced forward upon start of world display.
                 
                 
-                vr                    = VirmenTowersSetupNewCues.getNextTrial(vr);
-                vr                    = VirmenTowersSetupNewCues.initializeTrialWorld(vr);
+                %vr                    = VirmenTowersSetup.getNextTrial(vr);
+                vr                    = VirmenTowersSetup.getNextTrialLoaded(vr, vr.loaded_trial);
+                
+                vr                    = VirmenTowersSetup.initializeTrialWorld(vr);
                 %if vr.protocol.endExperiment == true
                 % Allow end of experiment only after completion of the last trial
                 %  vr.experimentEnded  = true;
@@ -162,7 +168,7 @@ try
                 
                 % Get region changes
                 [vr.region_changed, vr.trial_region_idx]  = ...
-                    VirmenTowersSetupNewCues.getRegionMaze(...
+                    VirmenTowersSetup.getRegionMaze(...
                     vr.virmen_structures.regions, vr.trial_region_idx, vr.position);
                 
                 % Save entry on region structure
@@ -173,7 +179,7 @@ try
                         vr.virmen_structures.regions.region_table{vr.trial_region_idx, 'rules'};
                 end
                 
-                %apply_rules(vr.current_rules, vr);
+                apply_rules(vr.current_rules, vr);
                 
                 
                 
@@ -181,45 +187,30 @@ try
                     % Check if animal has met the trial violation criteria
                     %case  Region.Violation
                         %vr.BpodMod.sendEvent(10);
-                    %    vr = VirmenTowersSetupNewCues.violationRulesExec(vr);
+                    %    vr = VirmenTowersSetup.violationRulesExec(vr);
 
                         % If still in the start region, do nothing
                     case Region2.InStart
-                        vr = VirmenRegions.TowersTaskRules.standard_start_rules(vr);
+                        vr = VirmenTowersSetup.inStartRulesExec(vr);
                         
                         % If in the cue region, make cues visible when the animal is close enough
                     case Region2.InCues
-                        vr = VirmenRegions.TowersTaskRules.standard_cue_rules(vr);
-                        if vr.region_changed
-                            vr.worlds{vr.currentWorld}.backgroundColor  = [1 0 0];
-                        end
+                        vr = VirmenTowersSetup.inCuesRulesExec(vr);
                         
-                    case Region2.InCuesTwo
-                        vr = VirmenRegions.TowersTaskRules.standard_cue_rules(vr);
-                        if vr.region_changed
-                            vr.worlds{vr.currentWorld}.backgroundColor  = [0 0.8 0];
-                        end
-                    case Region2.InCuesThree
-                        vr = VirmenRegions.TowersTaskRules.standard_cue_rules(vr);
-                        if vr.region_changed
-                            vr.worlds{vr.currentWorld}.backgroundColor  = [0 0 1];
-                        end
                          % Check if animal has entered the memory region after the cue period
                     case Region2.InMemory
-                        vr = VirmenRegions.TowersTaskRules.standard_memory_rules(vr);   
-                        if vr.region_changed
-                            vr.worlds{vr.currentWorld}.backgroundColor  = [0 0 0];
-                        end
+                        vr = VirmenTowersSetup.inMemoryRulesExec(vr);   
+                        
                      %case Region2.InMemoryZero
                     %    vr = VirmenTowersSetup.inMemory0RulesExec(vr);
                      
                     % Check if animal has entered the T-maze arms after the turn region
                     case Region2.InTurn
-                        %vr = VirmenTowersSetup.inTurnRulesExec(vr); 
+                        vr = VirmenTowersSetup.inTurnRulesExec(vr); 
                         
                      % Check if animal has entered a choice region after it has entered an arm   
                     case Region2.InArms
-                        vr = VirmenRegions.TowersTaskRules.standard_arm_rules(vr);   
+                        vr = VirmenTowersSetup.inArmRulesExec(vr);
                                        
                     case Region2.InChoiceL
                         vr.choice = Choice.L;
@@ -231,16 +222,16 @@ try
                 end
                 
                 % Time-based visibility controls
-                vr = VirmenRegions.TowersTaskRules.time_based_rules(vr);
+                vr = VirmenTowersSetup.timeBasedRulesExec(vr);
                 
                 % Dynamic sky colors
-                vr = VirmenRegions.TowersTaskRules.dynamic_sky_rules(vr);
+                vr = VirmenTowersSetup.dynamicSkyRulesExec(vr);
                 
                 % Dynamic landmarks
-                vr = VirmenRegions.TowersTaskRules.dynamic_landmark_rules(vr);
+                vr = VirmenTowersSetup.dynamicLandmarksRulesExec(vr);
                 
                 % Apply motion blurring to cues
-                %vr = VirmenRegions.TowersTaskRules.applyMotionBlurring(vr);
+                vr = VirmenTowersSetup.applyMotionBlurring(vr);
                 
                 %========================================================================
             case BehavioralState.ChoiceMade

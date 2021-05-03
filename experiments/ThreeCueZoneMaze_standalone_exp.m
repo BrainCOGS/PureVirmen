@@ -1,4 +1,4 @@
-function code = ThreeCueZoneMaze_exp
+function code = ThreeCueZoneMaze_standalone_exp
 % poisson_towers   Code for the ViRMEn experiment poisson_towers.
 %   code = poisson_towers   Returns handles to the functions that ViRMEn
 %   executes during engine initialization, runtime and termination.
@@ -22,18 +22,22 @@ function vr = initializationCodeFun(vr)
 comm.close_all_comm();
 
 %Initialize Serial Module BPOD
-vr.BpodMod = PCBPODModule('COM4');
+%vr.BpodMod = PCBPODModule('COM4');
 
 
 % Initialize tcp comm with Bcontrol
-  vr.tcp_client = comm.tcp.initialize_tcp( ...
-      VirmenCommParameters.ipAddressBControl, ...
-      VirmenCommParameters.tcpClientPort, ...
-      VirmenCommParameters.networkRole, ...
-      VirmenCommParameters.outputBufferSize);
+%   vr.tcp_client = comm.tcp.initialize_tcp( ...
+%       VirmenCommParameters.ipAddressBControl, ...
+%       VirmenCommParameters.tcpClientPort, ...
+%       VirmenCommParameters.networkRole, ...
+%       VirmenCommParameters.outputBufferSize);
 
   pause(0.5);
-  vr.virmen_structures = comm.virmen_specific.get_all_virmen_vars(vr.tcp_client);
+  data = load('vr_presaved.mat');
+  
+  %vr.virmen_structures = comm.virmen_specific.get_all_virmen_vars(vr.tcp_client);
+  vr.virmen_structures = data.vr.virmen_structures;
+  vr.loaded_trial      = data.vr.complete_trial_info;
   
 %Code when we want to test it alone...  
 %save('C:\Users\BrainCogs_Projects\ViRMEn_BPOD\+virmen_utils\virmen_structures_test.mat', ...
@@ -60,7 +64,7 @@ end
 vr    = initializeVRRig(vr, vr.virmen_structures.protocol_file);
 
 %****** DEBUG DISPLAY ******
-vr = VirmenTowersSetupNewCues.debugDisplaySetup(vr);
+vr = VirmenTowersSetup.debugDisplaySetup(vr);
 
 vr.act_comm   = false;
 
@@ -107,7 +111,9 @@ try
                 % animal is suddenly displaced forward upon start of world display.
                 
                 
-                vr                    = VirmenTowersSetupNewCues.getNextTrial(vr);
+                %vr                    = VirmenTowersSetup.getNextTrial(vr);
+                vr                    = VirmenTowersSetupNewCues.getNextTrialLoaded(vr, vr.loaded_trial);
+                
                 vr                    = VirmenTowersSetupNewCues.initializeTrialWorld(vr);
                 %if vr.protocol.endExperiment == true
                 % Allow end of experiment only after completion of the last trial
@@ -122,17 +128,17 @@ try
             case BehavioralState.InitializeTrial
                 % Teleport to start and send signals indicating start of trial
                 
-                event = -1;
-                s = 0;
-                while event == -1
-                    event = vr.BpodMod.readEvent();
-                    pause(0.2);
-                    disp(event);
-                    s = s+1;
-                    disp(['Wait start: ' num2str(s)]);
-                end
-                
-                vr.act_comm           = true;
+%                 event = -1;
+%                 s = 0;
+%                 while event == -1
+%                     event = vr.BpodMod.readEvent();
+%                     pause(0.2);
+%                     disp(event);
+%                     s = s+1;
+%                     disp(['Wait start: ' num2str(s)]);
+%                 end
+%                 
+%                 vr.act_comm           = true;
                 
                 vr                    = teleportToStart(vr);
                 vr                    = startVRTrial(vr);
@@ -175,13 +181,11 @@ try
                 
                 %apply_rules(vr.current_rules, vr);
                 
-                
-                
                 switch vr.trial_region_idx
                     % Check if animal has met the trial violation criteria
                     %case  Region.Violation
                         %vr.BpodMod.sendEvent(10);
-                    %    vr = VirmenTowersSetupNewCues.violationRulesExec(vr);
+                    %    vr = VirmenTowersSetup.violationRulesExec(vr);
 
                         % If still in the start region, do nothing
                     case Region2.InStart
@@ -190,26 +194,11 @@ try
                         % If in the cue region, make cues visible when the animal is close enough
                     case Region2.InCues
                         vr = VirmenRegions.TowersTaskRules.standard_cue_rules(vr);
-                        if vr.region_changed
-                            vr.worlds{vr.currentWorld}.backgroundColor  = [1 0 0];
-                        end
                         
-                    case Region2.InCuesTwo
-                        vr = VirmenRegions.TowersTaskRules.standard_cue_rules(vr);
-                        if vr.region_changed
-                            vr.worlds{vr.currentWorld}.backgroundColor  = [0 0.8 0];
-                        end
-                    case Region2.InCuesThree
-                        vr = VirmenRegions.TowersTaskRules.standard_cue_rules(vr);
-                        if vr.region_changed
-                            vr.worlds{vr.currentWorld}.backgroundColor  = [0 0 1];
-                        end
                          % Check if animal has entered the memory region after the cue period
                     case Region2.InMemory
                         vr = VirmenRegions.TowersTaskRules.standard_memory_rules(vr);   
-                        if vr.region_changed
-                            vr.worlds{vr.currentWorld}.backgroundColor  = [0 0 0];
-                        end
+                        
                      %case Region2.InMemoryZero
                     %    vr = VirmenTowersSetup.inMemory0RulesExec(vr);
                      

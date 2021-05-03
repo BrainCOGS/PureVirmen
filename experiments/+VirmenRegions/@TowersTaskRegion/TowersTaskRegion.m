@@ -27,6 +27,8 @@ classdef TowersTaskRegion < VirmenRegions.BaseRegionClass
             %_____________________________region_name__coordinate___selector_function___cross___entry__rules__rules_handles
             region_table(end+1,:) = table({'start'},       {2},     {@min},            {NaN},   {NaN},  {{''}}, {{''}});
             region_table(end+1,:) = table({'cue'},         {2},     {@min},            {NaN},   {NaN},  {{''}}, {{''}});
+            region_table(end+1,:) = table({'cueTwo'},      {2},     {@min},            {NaN},   {NaN},  {{''}}, {{''}});
+            region_table(end+1,:) = table({'cueThree'},    {2},     {@min},            {NaN},   {NaN},  {{''}}, {{''}});
             region_table(end+1,:) = table({'memory'},      {2},     {@min},            {NaN},   {NaN},  {{''}}, {{''}});
             region_table(end+1,:) = table({'turn'},        {2},     {@min},            {NaN},   {NaN},  {{''}}, {{''}});
             region_table(end+1,:) = table({'arms'},        {2},     {@min},            {NaN},   {NaN},  {{''}}, {{''}});
