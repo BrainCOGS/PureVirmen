@@ -12,6 +12,25 @@ code.termination = @terminationCodeFun;
 % --- INITIALIZATION code: executes before the ViRMEn engine starts.
 function vr = initializationCodeFun(vr)
 
+    %Check if all parameters for calibration exist on rigParameters file
+    vr.proj_params = [];
+        all_params = GeneralParameters.mini_vr_proj_parameters_full;
+        has_all_parms =1;
+        for i=1:length(all_params)
+            if ~isprop(RigParameters, all_params{i})
+                has_all_parms = 0;
+            else
+                %Set parameters for virmenEngine function
+                vr.proj_params(i) = RigParameters.(all_params{i});
+            end   
+        end
+        %If rigParameters doesn't have all parameters, transformation embedded in file
+       if has_all_parms
+        vr.exper.transformationFunction = @miniVR_projection_wparameters;
+       else
+        vr.exper.transformationFunction = @miniVR_projection;
+       end
+
     vr.param_list = GeneralParameters.mini_vr_proj_parameters;
     
     vr.param_key  = ['1', '2', '3', '4', ...
@@ -22,7 +41,7 @@ function vr = initializationCodeFun(vr)
     vr.change_param = [];
     
     %Check if there were missing parameters for projection in RigParameters
-    if length(vr.exper.userdata.proj_params) < length(vr.param_list)
+    if length(vr.proj_params) < length(vr.param_list)
         all_params = GeneralParameters.mini_vr_proj_parameters_full;
         s = [];
         fprintf('== Missing proj params in RigParameters ==\n');
