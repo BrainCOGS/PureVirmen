@@ -64,7 +64,7 @@ function vr = runtimeCodeFun(vr)
     end
     
     if ~isempty(vr.change_param)     
-        vr.exper.userdata.proj_params(vr.num_param) = vr.exper.userdata.proj_params(vr.num_param) + vr.change_param;
+        vr.proj_params(vr.num_param) = vr.proj_params(vr.num_param) + vr.change_param;
     end
     
     if ~isempty(num_param) || ~isempty(vr.change_param)
@@ -94,7 +94,7 @@ function display_params(vr)
         else
             fprintf('   ');
         end
-        fprintf('(%s) %s = %2.3f \n', vr.param_key(i), vr.param_list{i}, vr.exper.userdata.proj_params(i));
+        fprintf('(%s) %s = %2.3f \n', vr.param_key(i), vr.param_list{i}, vr.proj_params(i));
     end
     fprintf('\n====== Controls (applied to selected "->" param ) ======\n' );
     fprintf('(Q) -> + 0.1           (A) -> - 0.1  \n');

@@ -202,10 +202,14 @@ while ~vr.experimentEnded
     
     % Transform 3D coordinates to 2D screen coordinates
     try
+      if isfield(vr, 'proj_params')
+          vertexArrayTransformed = vr.exper.transformationFunction(vertexArray, vr.proj_params);
+      else
       if numTransformInputs == 2
         vertexArrayTransformed = vr.exper.transformationFunction(vertexArray, vr);
       else
         vertexArrayTransformed = vr.exper.transformationFunction(vertexArray);
+      end
       end
     catch ME
         drawnow;
