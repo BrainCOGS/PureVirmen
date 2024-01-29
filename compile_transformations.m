@@ -17,4 +17,10 @@ for iCode = 1:numel(code)
   mex(code{iCode}, '-O', variables{:});
 end
 
+if isfile('miniVR_projection_wparameters.cpp')
+    fprintf('================== Compiling miniVR_projection_wparameters ============\n');
+    mex miniVR_projection_wparameters.cpp -R2018a
+end
+
+
 cd(origLoc);
