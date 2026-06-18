@@ -17,8 +17,9 @@ function video_fullname = setupVideoFile(video_parent_path, video_ext, subject_f
 if ~contains(subject_fullname, '_')
     userid = 'no_userid';
 else
-    parts  = strsplit(subject_fullname, '_');
-    userid = parts{1};
+    % userid is the portion before the FIRST underscore, so a subject like
+    % 'lab_user_mouse01' yields userid 'lab' (matching the docstring).
+    userid = strtok(subject_fullname, '_');
 end
 
 date_str     = datestr(now, 'yyyymmdd');
