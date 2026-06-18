@@ -32,7 +32,26 @@ classdef RigParameters
     laserChannel        = 1                 % NI-DAQ digital line for turning on/off the laser
     rightPuffChannel    = 2                 % NI-DAQ digital line for left air puff solenoid
     leftPuffChannel     = 3                 % NI-DAQ digital line for right air puff solenoid
-    
+
+    % -----------------------------------------------------------------------
+    % Video acquisition (pupillometry / eye tracking)
+    % Requires: Image Acquisition Toolbox + FLIR Spinnaker GenTL support
+    %   Install via MATLAB Add-On Explorer: search "FLIR Spinnaker"
+    %
+    % Usage in experiment initialization code:
+    %   if RigParameters.hasCamera
+    %       vr = startVideoAcquisition(vr, subject_name, session_number);
+    %   end
+    % Usage in experiment termination code:
+    %   if isfield(vr, 'v'); vr = stopVideoAcquisition(vr); end
+    % -----------------------------------------------------------------------
+    hasCamera                           = false      % master on/off switch
+    video_parent_path                   = 'D:\Videos' % root directory for video files
+    video_ext                           = '.mj2'     % output file extension
+    video_acquisition_rate              = 30         % camera frame rate (fps)
+    video_exposure_time_in_microseconds = 5000       % exposure time; comment out to use camera default
+    video_gain                          = 0          % camera analog gain
+
   end
   
   methods (Static, Access = protected)
