@@ -19,7 +19,13 @@ end
 
 if isfile('miniVR_projection_wparameters.cpp')
     fprintf('================== Compiling miniVR_projection_wparameters ============\n');
-    mex miniVR_projection_wparameters.cpp -R2018a
+    if ismac
+        % Newer Xcode linkers error on MATLAB's optional C++ MEX export
+        % symbols; the classic linker treats them as optional
+        mex('miniVR_projection_wparameters.cpp', '-R2018a', 'LDFLAGS=$LDFLAGS -Wl,-ld_classic');
+    else
+        mex miniVR_projection_wparameters.cpp -R2018a
+    end
 end
 
 
