@@ -1,4 +1,4 @@
-function vr = startVideoAcquisition(vr, subject_name, session_number, logger)
+function vr = startVideoAcquisition(vr, subject_name, session_number)
 %STARTvideoacquisition Configure camera, start recording, and store sync timestamp.
 %
 %   vr = startVideoAcquisition(vr, subject_name, session_number)
@@ -25,9 +25,6 @@ function vr = startVideoAcquisition(vr, subject_name, session_number, logger)
 %   RigParameters must define: video_parent_path, video_ext,
 %     video_acquisition_rate, video_gain.
 
-if nargin < 4
-    logger = [];
-end
 
 checkCameraRigParameters();
 
@@ -48,8 +45,5 @@ vr.videoAcqInfo = struct( ...
 vr.timeElapsedVideoStart = toc(vr.preTic);
 start(vr.v);
 
-if ~isempty(logger) && isfield(vr, 'timeElapsedFirstTrial')
-    logger.save_timeElapsedFirstTrial(vr.timeElapsedFirstTrial);
-end
 
 end

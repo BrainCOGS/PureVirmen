@@ -12,13 +12,13 @@ function vr = stopVideoAcquisition(vr, logger)
 %     logger - (optional) object exposing save_timeElapsedFirstTrial(t).
 %              If provided and vr.timeElapsedFirstTrial exists, saves it now.
 
-if nargin < 2
-    logger = [];
-end
+%if nargin < 2
+%    logger = [];
+%end
 
-if ~isempty(logger) && isfield(vr, 'timeElapsedFirstTrial')
-    logger.save_timeElapsedFirstTrial(vr.timeElapsedFirstTrial);
-end
+%if ~isempty(logger) && isfield(vr, 'timeElapsedFirstTrial')
+%    logger.save_timeElapsedFirstTrial(vr.timeElapsedFirstTrial);
+%end
 
 if isfield(vr, 'v') && ~isempty(vr.v)
     stop(vr.v);
