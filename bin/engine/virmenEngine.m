@@ -98,6 +98,11 @@ end
 drawnow;
 virmenOpenGLRoutines(0,windows,ismac);
 
+% Stable time reference for the whole session; available in initialization
+% and movement/runtime code via toc(vr.preTic). Used by startVideoAcquisition
+% to record when video capture began relative to experiment start.
+vr.preTic = tic;
+
 % Run initialization code
 try
     vr = vr.code.initialization(vr); %#ok<*NASGU>
@@ -117,6 +122,9 @@ oldColorSize = NaN;
 vr.timeStarted = now;
 
 % Timing related info
+% timeElapsedFirstTrial records how long initialization took; used by
+% syncBehaviorVideo to align video frame times to behavioral iterations.
+vr.timeElapsedFirstTrial = toc(vr.preTic);
 firstTic = tic;
 vr.dt = 0; % Don't move on the first time step
 
