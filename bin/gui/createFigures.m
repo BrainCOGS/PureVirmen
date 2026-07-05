@@ -79,49 +79,35 @@ for ndx = 1:size(txt,1)
             buttons.(makeVar(row{colm.ToolTip})) = h;
             menus.(makeVar(row{colm.ToolTip})) = m;
         case 'dropdown'
-            hm = uisplittool(toolbar,'tooltipstring',row{colm.ToolTip});
+            % uipushtool has no built-in dropdown arrow (unlike the old
+            % uisplittool), so signal the dropdown by badging the icon with
+            % a small down-arrow and noting it in the tooltip.
+            hm = uipushtool(toolbar,'tooltipstring',[row{colm.ToolTip} ' (dropdown ' char(9662) ')']);
             set(hm,'separator',row{colm.Separator});
             f = strfind(row{colm.Icon},'_');
             if isempty(f)
-                set(hm,'cdata',allIcons.(row{colm.Icon}));
+                cdata = allIcons.(row{colm.Icon});
             else
                 main = allIcons.(row{colm.Icon}(f+1:end));
                 inset = allIcons.(row{colm.Icon}(1:f-1));
-                set(hm,'cdata',createCombinedIcon(main,inset));
+                cdata = createCombinedIcon(main,inset);
             end
+            set(hm,'cdata',addDropdownArrow(cdata));
             set(hm,'userdata',row{colm.Figure});
             lst = populateList(row{colm.Callback});
-            drawnow
-            j = get(hm,'javacontainer');
-            jmenu = get(j,'menucomponent');
-            h = {};
-            warning off MATLAB:hg:JavaSetHGProperty;
-            warning off MATLAB:hg:PossibleDeprecatedJavaSetHGProperty;
+
+            cmenu = uicontextmenu('Parent',guifig);
             for m = 1:length(lst)
-                h{m} = jmenu.add(lst(m).name); %#ok<AGROW>
-                jButton = handle(h{m}, 'CallbackProperties');
-                set(jButton,'ActionPerformedCallback',['virmenEventHandler(''' lst(m).callback ''',''' lst(m).callbackArgument ''');']);
+                uimenu(cmenu,'Label',lst(m).name,'callback', ...
+                    ['virmenEventHandler(''' lst(m).callback ''',''' lst(m).callbackArgument ''');'],'userdata','n/a');
             end
-            drawnow
-            
-            mfile = mfilename('fullpath');
-            path = fileparts(mfile);
-            for m = 1:length(lst)
-                if ischar(lst(m).icon)
-                    icon = javax.swing.ImageIcon([path filesep 'icons' filesep lst(m).icon '.png']);
-                else
-                    tmp = tempname;
-                    imwrite(lst(m).icon,[tmp '.png']);
-                    icon = javax.swing.ImageIcon([tmp '.png']);
-                end
-                h{m}.setIcon(icon);
-            end
-            
+            set(hm,'clickedcallback',{@showDropdownMenu,cmenu});
+
             m = uimenu(menus.(row{colm.Menu}),'Label',row{colm.MenuLabel},'userdata',row{colm.ToolTip});
             if length(get(menus.(row{colm.Menu}),'children')) > 1
                 set(m,'separator',get(hm,'separator'));
             end
-            for mndx = 1:length(h)
+            for mndx = 1:length(lst)
                 uimenu(m,'Label',lst(mndx).name,'callback',['virmenEventHandler(''' lst(mndx).callback ''',''' lst(mndx).callbackArgument ''');'],'userdata','n/a');
             end
             
@@ -192,6 +178,38 @@ icon(1:12,end-11:end,:) = main;
 inset = imresize(inset,[10 10]);
 icon(end-9:end,1:10,:) = inset;
 
+function icon = addDropdownArrow(icon)
+
+% Badge the bottom-right corner of a 16x16 toolbar icon with a small
+% down-arrow so the user can tell the button opens a dropdown menu.
+% A light halo behind the arrow keeps it legible over dark icon content.
+dark  = uint8(40);          % arrow colour
+light = uint8(245);         % halo colour
+for c = 1:3
+    icon(11:16, 10:16, c) = light;   % clear a light patch for the badge
+end
+% Down-triangle, each row one pixel narrower than the one above.
+rows = {12, 13, 14};
+cols = {11:15, 12:14, 13};
+for k = 1:numel(rows)
+    icon(rows{k}, cols{k}, :) = dark;
+end
+
 function str = makeVar(str)
 
 str = str(regexp(str,'[A-Za-z]'));
+
+function showDropdownMenu(src,~,cmenu)
+
+% Open the dropdown's context menu at the pointer, clamped inside the
+% figure so toolbar clicks (above the figure's inner area) open it just
+% below the toolbar
+fig = ancestor(src,'figure');
+oldUnits = get(fig,'units');
+set(fig,'units','pixels');
+figPos = get(fig,'position');
+set(fig,'units',oldUnits);
+pos = get(0,'pointerlocation') - figPos(1:2);
+pos = max(pos,[1 1]);
+pos = min(pos,figPos(3:4));
+set(cmenu,'position',pos,'visible','on');
