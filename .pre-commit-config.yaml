@@ -30,25 +30,13 @@ repos:
 
 - repo: local
   hooks:
-    # One spelling for AI attribution, so `git log --grep='^Assisted-by: '`
-    # finds every AI-assisted commit: `Assisted-by: <Harness>:<model>`,
-    # e.g. `Assisted-by: ClaudeCode:claude-opus-5-5` or
-    # `Assisted-by: OpenCode:Kimi-K2.6`. Each pattern below is a spelling to
-    # reject; a commit message line matching any of them fails the hook.
-    - id: ai-trailer
-      name: 'AI trailer is "Assisted-by: <Harness>:<model>"'
-      language: pygrep
-      entry: |
-        (?x)^(?:
-          # Assisted-by in any other shape: other key case, no space after
-          # the colon, a space inside the harness or model, missing parts.
-          (?!Assisted-by:\ [A-Za-z][A-Za-z0-9.-]*:\S+$)(?i:assisted[-_\ ]?by)\s*:
-          # Claude Code is always the harness "ClaudeCode".
-          | Assisted-by:\ (?!ClaudeCode:)(?i:[^:]*claude)
-          # Claude models use the exact model id: claude-opus-5-5, not
-          # claude-opus-5.5, Opus-5 or anthropic/claude-opus-5-5.
-          | Assisted-by:\ [^:]+:(?!claude-[a-z]+(?:-[0-9]+)+$)(?i:.*(?:claude|opus|sonnet|haiku|fable))
-          # Claude is never listed as a co-author.
-          | (?i:co-authored[-_\ ]?by)\s*:.*(?i:claude|anthropic)
-        )
+    # Humans author commits; AI help is disclosed with one
+    # `Assisted-by: <Harness>:<model>` trailer per agent, and no AI agent is the
+    # author, committer or a Co-authored-by. Vendored from agent-tooling
+    # (hooks/check_ai_attribution.py, with its tests); CI runs it on every
+    # commit of a PR or push (lint.yml).
+    - id: ai-attribution
+      name: AI attribution (Assisted-by trailer, no AI authors)
+      language: python
+      entry: python .github/scripts/check_ai_attribution.py
       stages: [commit-msg]
