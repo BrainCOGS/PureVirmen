@@ -1,0 +1,42 @@
+# Dependabot configuration: keeps the SHA-pinned actions in .github/workflows
+# current. Same policy as BrainCOGS/U19-pipeline-python.
+
+version: 2
+
+updates:
+  #
+  # GitHub Actions (.github/workflows/)
+  #
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    cooldown:
+      default-days: 7
+
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+
+    open-pull-requests-limit: 5
+
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+    commit-message:
+      prefix: "ci"
+
+    rebase-strategy: "auto"
+
+    # See the docker entry below: version and security updates are grouped
+    # independently, so both need a group.
+    groups:
+      github-actions:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
+      github-actions-security:
+        applies-to: "security-updates"
+        patterns:
+          - "*"

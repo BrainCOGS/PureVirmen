@@ -1,0 +1,54 @@
+# Run with prek (https://github.com/j178/prek) or pre-commit:
+#   uv tool install prek && prek install && prek run --all-files
+# `prek install` also installs the commit-msg hook (default_install_hook_types).
+#
+# This repo is mostly MATLAB, so there are no formatters or whitespace fixers:
+# the hooks look for secrets, merge conflict markers, workflow problems and
+# the AI trailer spelling, and change no files.
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit, pre-merge-commit, manual]
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v6.0.0
+  hooks:
+    - id: check-merge-conflict
+    - id: check-case-conflict
+
+- repo: https://github.com/gitleaks/gitleaks
+  rev: v8.30.1
+  hooks:
+    # Scans only the changes being introduced: the staged changes (or a
+    # merge's own changes) on commit, the commits of the PR in CI (lint.yml).
+    # Older commits hold known findings that are rotated, not rewritten.
+    - id: gitleaks
+      entry: .github/scripts/gitleaks-changes.sh
+
+- repo: https://github.com/zizmorcore/zizmor-pre-commit
+  rev: v1.30.1
+  hooks:
+    - id: zizmor
+
+- repo: local
+  hooks:
+    # One spelling for AI attribution, so `git log --grep='^Assisted-by: '`
+    # finds every AI-assisted commit: `Assisted-by: <Harness>:<model>`,
+    # e.g. `Assisted-by: ClaudeCode:claude-opus-5-5` or
+    # `Assisted-by: OpenCode:Kimi-K2.6`. Each pattern below is a spelling to
+    # reject; a commit message line matching any of them fails the hook.
+    - id: ai-trailer
+      name: 'AI trailer is "Assisted-by: <Harness>:<model>"'
+      language: pygrep
+      entry: |
+        (?x)^(?:
+          # Assisted-by in any other shape: other key case, no space after
+          # the colon, a space inside the harness or model, missing parts.
+          (?!Assisted-by:\ [A-Za-z][A-Za-z0-9.-]*:\S+$)(?i:assisted[-_\ ]?by)\s*:
+          # Claude Code is always the harness "ClaudeCode".
+          | Assisted-by:\ (?!ClaudeCode:)(?i:[^:]*claude)
+          # Claude models use the exact model id: claude-opus-5-5, not
+          # claude-opus-5.5, Opus-5 or anthropic/claude-opus-5-5.
+          | Assisted-by:\ [^:]+:(?!claude-[a-z]+(?:-[0-9]+)+$)(?i:.*(?:claude|opus|sonnet|haiku|fable))
+          # Claude is never listed as a co-author.
+          | (?i:co-authored[-_\ ]?by)\s*:.*(?i:claude|anthropic)
+        )
+      stages: [commit-msg]
