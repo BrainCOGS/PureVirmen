@@ -38,6 +38,8 @@ jobs:
         run: uvx prek run --all-files --show-diff-on-failure
 
       - name: Scan the commits of the PR (or push) for secrets
+        # a manual run has no base to scan from
+        if: github.event_name != 'workflow_dispatch'
         env:
           GITLEAKS_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: uvx prek run gitleaks --all-files --verbose
