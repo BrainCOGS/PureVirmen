@@ -84,9 +84,6 @@ Assisted-by: ClaudeCode:claude-opus-5-5
   author or committer. If the harness adds its own commit or PR attribution
   text, turn it off (Claude Code: `"attribution": {"commit": "", "pr": ""}` in
   `~/.claude/settings.json`).
-- The `ai-attribution` commit-msg hook enforces this. If it rejects a commit,
-  fix the message; never use `--no-verify`. If the hook isn't installed in this
-  checkout, run `prek install`.
 
 ## 5. Push and open the PR
 

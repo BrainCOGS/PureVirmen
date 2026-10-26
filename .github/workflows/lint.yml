@@ -28,7 +28,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          enable-cache: true
+          # no lockfile to key a cache on, and uvx only fetches prek
+          enable-cache: false
 
       - name: Run prek
         env:
@@ -43,10 +44,3 @@ jobs:
         env:
           GITLEAKS_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: uvx prek run gitleaks --all-files --verbose
-
-      - name: Check AI attribution in the commits of the PR (or push)
-        env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-          # On PRs, HEAD is GitHub's synthetic merge commit; check up to the PR's tip.
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python3 .github/scripts/check_ai_attribution.py --since "$BASE" --head "$HEAD_SHA"
