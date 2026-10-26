@@ -1,11 +1,9 @@
 # Run with prek (https://github.com/j178/prek) or pre-commit:
 #   uv tool install prek && prek install && prek run --all-files
-# `prek install` also installs the commit-msg hook (default_install_hook_types).
 #
 # This repo is mostly MATLAB, so there are no formatters or whitespace fixers:
-# the hooks look for secrets, merge conflict markers, workflow problems and
-# the AI trailer spelling, and change no files.
-default_install_hook_types: [pre-commit, commit-msg]
+# the hooks look for secrets, merge conflict markers, and workflow problems, and
+# change no files.
 default_stages: [pre-commit, pre-merge-commit, manual]
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -27,16 +25,3 @@ repos:
   rev: v1.30.1
   hooks:
     - id: zizmor
-
-- repo: local
-  hooks:
-    # Humans author commits; AI help is disclosed with one
-    # `Assisted-by: <Harness>:<model>` trailer per agent, and no AI agent is the
-    # author, committer or a Co-authored-by. Vendored from agent-tooling
-    # (hooks/check_ai_attribution.py, with its tests); CI runs it on every
-    # commit of a PR or push (lint.yml).
-    - id: ai-attribution
-      name: AI attribution (Assisted-by trailer, no AI authors)
-      language: python
-      entry: python .github/scripts/check_ai_attribution.py
-      stages: [commit-msg]
