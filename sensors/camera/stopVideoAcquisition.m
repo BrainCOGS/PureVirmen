@@ -67,9 +67,20 @@ if isstruct(vr.v) && strcmp(vr.v.type, 'ffmpeg')
         delete(vr.v.drainTimer);
     end
 else
-    % VideoWriter path
-    stop(vr.v);
-    delete(vr.v);
+    % stop ends acquisition before asynchronous disk writing necessarily
+    % finishes. Deleting earlier discards queued frames.
+    camera = vr.v;
+    cleanup = onCleanup(@() delete(camera)); %#ok<NASGU>
+    stop(camera);
+    shutdownStart = tic;
+    while camera.DiskLoggerFrameCount < camera.FramesAcquired
+        if toc(shutdownStart) > 30
+            error('PureVirmen:diskLoggerShutdownTimeout', ...
+                'Disk logging did not finish within 30 seconds (%d of %d frames written).', ...
+                camera.DiskLoggerFrameCount, camera.FramesAcquired);
+        end
+        pause(0.05);
+    end
 end
 
 vr.v = [];
