@@ -17,6 +17,9 @@ function v = configureSingleCamera(RigParameters, video_filename)
 %     startVideoAcquisition / stopVideoAcquisition which handle both types.
 %     Requires: ffmpeg on system PATH.
 %     See RigParameters.m.example for encoder configuration.
+%     The requested encoder is tested before acquisition. An incompatible
+%     GPU/driver fails with diagnostics; choose libx264 explicitly for CPU.
+%     FFmpeg output is saved next to the video as <name>.ffmpeg.log.
 %
 %   Required RigParameters properties:
 %     video_acquisition_rate  - frame rate in fps
@@ -75,7 +78,11 @@ end
 
 function v = configureWithFFmpeg(RigParameters, video_filename)
 % Check ffmpeg availability
-[status, ~] = system('ffmpeg -version');
+if ispc
+    [status, found] = system('where ffmpeg');
+else
+    [status, found] = system('command -v ffmpeg');
+end
 if status ~= 0
     warning('PureVirmen:noFFmpeg', ...
         ['ffmpeg not found on PATH. ' ...
@@ -83,6 +90,8 @@ if status ~= 0
     v = configureWithVideoWriter(RigParameters, video_filename);
     return;
 end
+
+ffmpegExe = strtok(strtrim(found), sprintf('\r\n'));
 
 % Configure the FLIR camera. Frames are NOT written to disk by IMAQ; they are
 % buffered in memory and a FramesAcquiredFcn callback (wired up in
@@ -132,7 +141,7 @@ mp4_filename = fullfile(fdir, [fname '.mp4']);
 % Camera delivers single-channel Mono8 (-pix_fmt gray on input). Force a
 % widely-compatible output pixel format so the .mp4 plays in standard
 % players / H.264 decoders that don't accept grayscale streams.
-cmdParts = { 'ffmpeg', '-y', ...
+cmdParts = { ffmpegExe, '-hide_banner', '-nostats', '-y', ...
     '-f', 'rawvideo', '-pix_fmt', 'gray', ...
     '-s', sprintf('%dx%d', width, height), '-r', num2str(fps), ...
     '-i', 'pipe:0', ...
@@ -140,34 +149,22 @@ cmdParts = { 'ffmpeg', '-y', ...
 cmdParts = [cmdParts, splitArgs(encoderArgs), splitArgs(extraArgs), ...
             {'-pix_fmt', 'yuv420p', mp4_filename}];
 
-% Launch ffmpeg via Java ProcessBuilder so we get a real handle on its stdin.
-% redirectErrorStream keeps stderr from filling the OS pipe buffer (which
-% would otherwise deadlock ffmpeg); a drain thread empties it continuously.
+% Check the selected encoder before starting acquisition. Use the same
+% command/settings for the probe and recording; encoder choice stays explicit.
+logfile = fullfile(fdir, [fname '.ffmpeg.log']);
 try
+    verifyEncoder(cmdParts, width, height, logfile);
     pb = java.lang.ProcessBuilder(cmdParts);
     pb.redirectErrorStream(true);
+    % Write output directly to disk: MATLAB timers cannot drain stderr while
+    % a blocking Java stdin write or waitFor is running.
+    pb.redirectOutput(java.io.File(logfile));
     proc = pb.start();
 catch err
     delete(cam);
-    error('PureVirmen:ffmpegLaunchFailed', ...
-        'Failed to launch ffmpeg.\n  Command: %s\n  Error: %s', ...
-        strjoin(cmdParts, ' '), err.message);
+    rethrow(err);
 end
-
-stdin = proc.getOutputStream();   % we write raw frames here
-
-% Background-drain ffmpeg's merged stdout/stderr so its output buffer never
-% fills and stalls encoding. A MATLAB timer polling the reader is portable
-% (no custom Java class needed); it stops itself once ffmpeg closes the stream.
-logReader = java.io.BufferedReader( ...
-    java.io.InputStreamReader(proc.getInputStream()));
-drainTimer = timer( ...
-    'ExecutionMode', 'fixedSpacing', ...
-    'Period',        0.5, ...
-    'BusyMode',      'drop', ...
-    'TimerFcn',      @(t, ~) drainReader(t, logReader), ...
-    'Name',          'ffmpegLogDrain');
-start(drainTimer);
+stdin = proc.getOutputStream();
 
 % Package everything the start/stop functions need. The frame-streaming
 % callback is wired up in startVideoAcquisition once acquisition begins.
@@ -176,7 +173,7 @@ v.type       = 'ffmpeg';
 v.cam        = cam;
 v.proc       = proc;
 v.stdin      = stdin;
-v.drainTimer = drainTimer;
+v.logfile    = logfile;
 v.filename   = mp4_filename;
 v.width      = width;
 v.height     = height;
@@ -186,24 +183,41 @@ end
 
 % -------------------------------------------------------------------------
 
-function drainReader(t, reader)
-% Read and discard all currently-available lines from ffmpeg's output. When
-% the stream is closed (ffmpeg exited), readLine returns [] and we stop.
-try
-    while reader.ready()
-        line = reader.readLine();
-        if isempty(line)
-            stop(t);
-            return;
-        end
-    end
-catch
-    stop(t);   % stream closed underneath us; nothing more to drain
+function verifyEncoder(cmdParts, width, height, logfile)
+% Encode three frames at the actual resolution with the recording options.
+folder = tempname;
+mkdir(folder);
+cleanup = onCleanup(@() rmdir(folder, 's')); %#ok<NASGU>
+rawfile = fullfile(folder, 'frames.gray');
+fid = fopen(rawfile, 'w');
+if fid < 0, error('PureVirmen:ffmpegProbeFile', 'Cannot write %s.', rawfile); end
+for k = 1:3, fwrite(fid, zeros(width, height, 'uint8'), 'uint8'); end
+fclose(fid);
+probe = cmdParts;
+probe{find(strcmp(probe, '-i'), 1) + 1} = rawfile;
+probe{end} = fullfile(folder, 'probe.mp4');
+pb = java.lang.ProcessBuilder(probe);
+pb.redirectErrorStream(true);
+pb.redirectOutput(java.io.File(logfile));
+proc = pb.start();
+processCleanup = onCleanup(@() terminateProcess(proc)); %#ok<NASGU>
+proc.getOutputStream().close();
+finished = proc.waitFor(int64(30), java.util.concurrent.TimeUnit.SECONDS);
+if ~finished
+    proc.destroyForcibly();
+    proc.waitFor(int64(5), java.util.concurrent.TimeUnit.SECONDS);
+end
+if ~finished || proc.exitValue() ~= 0
+    error('PureVirmen:ffmpegPreflightFailed', ...
+        ['FFmpeg encoder check failed; recording has not started. ' ...
+         'Check the encoder/driver or set RigParameters.ffmpegEncoder = ''libx264''.\n' ...
+         'Log: %s\n%s'], logfile, fileread(logfile));
 end
 end
 
-% -------------------------------------------------------------------------
-
+function terminateProcess(proc)
+if proc.isAlive(), proc.destroyForcibly(); end
+end
 function parts = splitArgs(argStr)
 % Split a whitespace-separated argument string into a cell array, dropping
 % empties. ProcessBuilder needs each token as a separate element (no shell
@@ -218,31 +232,16 @@ end
 
 % -------------------------------------------------------------------------
 
-function drainProcessOutput(proc)
-% Continuously read and discard ffmpeg's (merged) stdout/stderr on a Java
-% thread so its output buffer never fills and stalls encoding. The thread
-% exits on its own when ffmpeg closes the stream at shutdown.
-reader = java.io.BufferedReader( ...
-    java.io.InputStreamReader(proc.getInputStream()));
-runnable = java.lang.Runnable.empty; %#ok<NASGU>
-t = java.lang.Thread(DrainRunnable(reader)); %#ok<NASGU>
-% DrainRunnable is unavailable as a Java class in base MATLAB, so fall back
-% to a timer that polls the reader if the helper class is absent.
-% (Kept simple: use a MATLAB timer to drain.)
-end
-
-% -------------------------------------------------------------------------
-
 function args = buildEncoderArgs(RigParameters, encoder)
 % Build encoder-specific ffmpeg argument string.
 %
 %   NVENC (h264_nvenc / hevc_nvenc):
 %     Uses ffmpegBitrate and ffmpegPreset.
-%     CRF is not supported by NVENC — use bitrate control instead.
+%     CRF is not supported by NVENC â€” use bitrate control instead.
 %
 %   libx264 / libx265 (CPU):
 %     Uses ffmpegCRF and ffmpegPreset.
-%     Bitrate is not set — CRF gives constant-quality output.
+%     Bitrate is not set â€” CRF gives constant-quality output.
 
 isNvenc  = contains(encoder, 'nvenc');
 isX264   = contains(encoder, 'libx264') || contains(encoder, 'libx265');
@@ -269,7 +268,7 @@ elseif isX264
     args = sprintf('-preset %s -crf %d', preset, crf);
 
 else
-    % Unknown encoder — pass no extra args; rely on ffmpegExtraArgs if needed
+    % Unknown encoder â€” pass no extra args; rely on ffmpegExtraArgs if needed
     args = '';
 end
 

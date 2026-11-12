@@ -9,7 +9,8 @@ function vr = stopVideoAcquisition(vr, logger)
 %
 %   For the ffmpeg path, closing the pipe signals ffmpeg to finalize the
 %   output file. This function waits for ffmpeg to flush and exit before
-%   returning, so the output file is complete when this returns.
+%   returning. A failed encoder raises PureVirmen:ffmpegFailed with its log;
+%   an encoder that does not exit within 30 seconds is terminated and reported.
 %
 %   Inputs:
 %     vr     - ViRMEn runtime struct containing vr.v from startVideoAcquisition
@@ -29,6 +30,8 @@ if ~isfield(vr, 'v') || isempty(vr.v)
 end
 
 if isstruct(vr.v) && strcmp(vr.v.type, 'ffmpeg')
+    v = vr.v;
+    cleanup = onCleanup(@() releaseFFmpeg(v)); %#ok<NASGU>
     % ffmpeg path: stop the camera first (no more frames will be produced),
     % flush any frames still buffered, then close ffmpeg's stdin. Closing the
     % stream signals EOF, which makes ffmpeg finalize and close the .mp4.
@@ -53,19 +56,24 @@ if isstruct(vr.v) && strcmp(vr.v.type, 'ffmpeg')
         end
     end
 
-    % Wait for ffmpeg to flush and exit so the file is complete on return.
-    if isfield(vr.v, 'proc') && ~isempty(vr.v.proc)
-        try
-            vr.v.proc.waitFor();
-        catch
+    % A timed wait avoids hanging experiment termination on a stuck encoder.
+    % Output is redirected to v.logfile at launch, so no MATLAB timer needs
+    % to run while Java is waiting or writing frames.
+    if isfield(v, 'proc') && ~isempty(v.proc)
+        seconds = java.util.concurrent.TimeUnit.SECONDS;
+        if ~v.proc.waitFor(int64(30), seconds)
+            v.proc.destroyForcibly();
+            error('PureVirmen:ffmpegShutdownTimeout', ...
+                'FFmpeg did not finish within 30 seconds; recording may be incomplete.\n%s', ...
+                encoderDiagnostics(v));
+        end
+        if v.proc.exitValue() ~= 0
+            error('PureVirmen:ffmpegFailed', ...
+                'FFmpeg exited with code %d; recording is incomplete.\n%s', ...
+                v.proc.exitValue(), encoderDiagnostics(v));
         end
     end
 
-    % Tear down the log-drain timer.
-    if isfield(vr.v, 'drainTimer') && ~isempty(vr.v.drainTimer) && isvalid(vr.v.drainTimer)
-        stop(vr.v.drainTimer);
-        delete(vr.v.drainTimer);
-    end
 else
     % VideoWriter path
     stop(vr.v);
@@ -74,4 +82,28 @@ end
 
 vr.v = [];
 
+end
+
+function text = encoderDiagnostics(v)
+text = '';
+if isfield(v, 'logfile') && isfile(v.logfile)
+    text = sprintf('FFmpeg log: %s\n%s', v.logfile, fileread(v.logfile));
+end
+end
+
+function releaseFFmpeg(v)
+if isfield(v, 'cam'), deleteIfValid(v.cam); end
+if isfield(v, 'stdin') && ~isempty(v.stdin)
+    try, v.stdin.close(); catch, end
+end
+if isfield(v, 'proc') && ~isempty(v.proc)
+    try
+        if v.proc.isAlive(), v.proc.destroyForcibly(); end
+    catch
+    end
+end
+end
+
+function deleteIfValid(camera)
+if ~isempty(camera) && isvalid(camera), delete(camera); end
 end
