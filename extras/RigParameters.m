@@ -37,6 +37,18 @@ classdef RigParameters
         tcpClientPort       = 30000             % port for tcp communication
         outputBufferSize    = 40                % byte size for virmen variables
         
+
+    %% Pupilometry video parameters
+    video_acquisition_rate          =   30
+    video_record                    =   false
+    video_gain                      =   8
+
+    %% Video acquisition Parameters
+    video_parent_path               =  'E:\TestPureVirmenVideo'
+    video_ext                       =  '.mj2'
+    camera_type                     =  'gentl'
+    video_type                      =  'pupillometry'
+
         
         %% Mini VR projection parameters
         % Spherical screen radius

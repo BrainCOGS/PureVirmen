@@ -32,7 +32,49 @@ classdef RigParameters
     laserChannel        = 1                 % NI-DAQ digital line for turning on/off the laser
     rightPuffChannel    = 2                 % NI-DAQ digital line for left air puff solenoid
     leftPuffChannel     = 3                 % NI-DAQ digital line for right air puff solenoid
-    
+
+    % -----------------------------------------------------------------------
+    % Video acquisition (pupillometry / eye tracking)
+    % Requires: Image Acquisition Toolbox + FLIR Spinnaker GenTL support
+    %   Install via MATLAB Add-On Explorer: search "FLIR Spinnaker"
+    %
+    % Usage in experiment initialization code:
+    %   if RigParameters.hasCamera
+    %       vr = startVideoAcquisition(vr, subject_name, session_number);
+    %   end
+    % Usage in experiment termination code:
+    %   if isfield(vr, 'v'); vr = stopVideoAcquisition(vr); end
+    % -----------------------------------------------------------------------
+    hasCamera                           = false      % master on/off switch
+    video_parent_path                   = 'D:\Videos' % root directory for video files
+    video_acquisition_rate              = 30         % camera frame rate (fps)
+    video_exposure_time_in_microseconds = 5000       % exposure time; comment out to use camera default
+    video_gain                          = 0          % camera analog gain
+
+    % --- Encoder: VideoWriter (default) ---
+    % No extra dependencies. Produces Motion JPEG 2000 (.mj2) files.
+    useFFmpeg                           = false
+    video_ext                           = '.mj2'
+
+    % --- Encoder: ffmpeg (optional, requires ffmpeg on system PATH) ---
+    % Set useFFmpeg = true and choose ONE of the two encoder configurations
+    % below. Falls back to VideoWriter automatically if ffmpeg is unavailable.
+    %
+    % NVENC — NVIDIA GPU (Windows, recommended for rigs with NVIDIA cards):
+    %   ffmpegEncoder  = 'h264_nvenc'
+    %   ffmpegPreset   = 'fast'   % 'fast' | 'medium' | 'slow' | 'lossless'
+    %   ffmpegBitrate  = '5M'     % target bitrate; higher = better quality / larger file
+    %   ffmpegCRF      = []       % leave empty — NVENC uses bitrate control, not CRF
+    %
+    % libx264 — CPU fallback (any machine with ffmpeg, no GPU required):
+    %   ffmpegEncoder  = 'libx264'
+    %   ffmpegPreset   = 'fast'   % 'ultrafast' | 'fast' | 'medium' | 'slow'
+    %   ffmpegCRF      = 23       % 0-51, lower = better quality; 18 ≈ visually lossless
+    %   ffmpegBitrate  = []       % leave empty — libx264 uses CRF, not bitrate
+    %
+    % Power-user escape hatch (appended verbatim to the ffmpeg command):
+    %   ffmpegExtraArgs = ''
+
   end
   
   methods (Static, Access = protected)
