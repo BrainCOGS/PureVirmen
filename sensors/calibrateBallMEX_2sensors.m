@@ -19,7 +19,7 @@ sprintf('Now running. Spin ball desired number of times along desired axis, then
 while true
   [dy1,dx1,dY,dX,dT]  = arduinoReader('get');
   arduinoReader('poll');
-  java.lang.Thread.sleep(8);
+  pause(0.008);
 
   dx_bottom = dx_bottom + dX;
   dy_bottom = dy_bottom + dY;

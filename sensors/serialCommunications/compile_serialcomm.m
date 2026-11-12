@@ -1,5 +1,11 @@
 function compile_serialcomm()
 
+  % Serial.cpp uses the Windows COM-port API
+  if ~ispc
+    fprintf('!!  WARNING:  Serial communications MEX is only supported on Windows. Doing nothing.\n');
+    return;
+  end
+
   % Compilation options
   mexOpts       = {'-O'};
 

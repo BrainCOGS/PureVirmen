@@ -3,11 +3,13 @@ function install_virmen()
 [scriptDir,scriptName]  = fileparts(mfilename('fullpath'));
 origLoc                 = cd(scriptDir);
 
-fprintf('::  Copying git hooks...\n');
-copyfile('git-hooks/*', '.git/hooks');
+if exist('git-hooks', 'dir')
+  fprintf('::  Copying git hooks...\n');
+  copyfile('git-hooks/*', '.git/hooks');
+end
 
 fprintf('::  Logging git status to version.txt...\n');
-system('git log -1 --pretty=oneline HEAD > $GIT_DIR/../version.txt');
+system('git log -1 --pretty=oneline HEAD > version.txt');
 
 
 try
@@ -35,14 +37,16 @@ catch err
             '   is properly configured, and then re-run ' scriptName '.\n'            ...
             '\n\n'                                                                    ...
          ]);
-  displayException(err);
+  disp(getReport(err));
   
 end
 
 cd(scriptDir);
      
 if exist('extras/RigParameters.m', 'file')
-  system('start winmerge extras/RigParameters.m extras/RigParameters.m.example');
+  if ispc
+    system('start winmerge extras/RigParameters.m extras/RigParameters.m.example');
+  end
   fprintf('::  Please edit your existing RigParameters.m to match RigParameters.m.example.\n');
 else
   copyfile('extras/RigParameters.m.example', 'extras/RigParameters.m');
