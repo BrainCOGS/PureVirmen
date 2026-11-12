@@ -52,6 +52,13 @@ vr.videoAcqInfo = struct( ...
     'video_gain',             RigParameters.video_gain, ...
     'video_fullname',         actual_filename);
 
+% Record which encoder the ffmpeg path actually uses (after preflight).
+if isstruct(vr.v) && strcmp(vr.v.type, 'ffmpeg')
+    vr.videoAcqInfo.video_encoder          = vr.v.encoder;
+    vr.videoAcqInfo.video_encoder_fallback = vr.v.encoderFallback;
+    vr.videoAcqInfo.video_ffmpeg_log       = vr.v.logfile;
+end
+
 % Capture timestamp immediately before starting — this is the sync anchor.
 % vr.preTic is set by virmenEngine before initialization(), so toc(vr.preTic)
 % gives seconds elapsed since the engine's time zero.
@@ -73,7 +80,11 @@ if isstruct(v) && strcmp(v.type, 'ffmpeg')
     % keeps callback overhead low without letting the buffer grow unbounded.
     cam = v.cam;
     cam.FramesAcquiredFcnCount = 5;
-    cam.FramesAcquiredFcn = @(src, ev) pushFramesToFFmpeg(src, v.stdin, v.width, v.height);
+    stdin   = v.stdin;
+    width   = v.width;
+    height  = v.height;
+    logfile = v.logfile;
+    cam.FramesAcquiredFcn = @(src, ev) pushFramesToFFmpeg(src, stdin, width, height, logfile);
     start(cam);
 else
     start(v);

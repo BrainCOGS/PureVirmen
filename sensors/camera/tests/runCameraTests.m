@@ -12,7 +12,7 @@ here = fileparts(mfilename('fullpath'));
 addpath(here);
 addpath(fileparts(here));   % sensors/camera (the code under test)
 
-tests = { @smokeTestFFmpegTransport };
+tests = { @smokeTestFFmpegTransport, @recordingRegressions, @encoderRegressions };
 
 nFail = 0;
 for i = 1:numel(tests)
@@ -33,4 +33,16 @@ if nFail > 0
     exit(1);
 end
 % In -batch mode, return normally so MATLAB exits 0.
+end
+
+function recordingRegressions()
+here = fileparts(mfilename('fullpath'));
+results = runtests(fullfile(here, 'testCameraRecording.m'));
+assertSuccess(results);
+end
+
+function encoderRegressions()
+here = fileparts(mfilename('fullpath'));
+results = runtests(fullfile(here, 'testFFmpegEncoderFallback.m'));
+assertSuccess(results);
 end

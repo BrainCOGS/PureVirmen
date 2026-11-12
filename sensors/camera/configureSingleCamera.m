@@ -18,6 +18,19 @@ function v = configureSingleCamera(RigParameters, video_filename)
 %     Requires: ffmpeg on system PATH.
 %     See RigParameters.m.example for encoder configuration.
 %
+%     Before recording, the selected encoder is preflighted: synthetic frames
+%     at the camera's resolution and frame rate go through a real ffmpeg
+%     process with the recording's options. If an NVENC encoder fails (for
+%     example, a driver older than the ffmpeg build needs), the session
+%     records with CPU libx264 and warns PureVirmen:ffmpegEncoderFallback with
+%     ffmpeg's diagnostic. If no encoder works, this errors with
+%     PureVirmen:ffmpegPreflightFailed before acquisition starts. The encoder
+%     never changes once recording has started.
+%
+%     ffmpeg's output (preflights included) goes to <name>.ffmpeg.log next to
+%     the video. Struct fields of interest: filename, logfile, encoder (the
+%     one used), requestedEncoder, encoderFallback, preflight (results).
+%
 %   Required RigParameters properties:
 %     video_acquisition_rate  - frame rate in fps
 %     video_gain              - analog gain
@@ -74,9 +87,10 @@ end
 % -------------------------------------------------------------------------
 
 function v = configureWithFFmpeg(RigParameters, video_filename)
-% Check ffmpeg availability
-[status, ~] = system('ffmpeg -version');
-if status ~= 0
+% Check ffmpeg availability. Resolve the absolute path so the Java
+% subprocess launches the same binary system() finds.
+ffmpegExe = findFFmpeg();
+if isempty(ffmpegExe)
     warning('PureVirmen:noFFmpeg', ...
         ['ffmpeg not found on PATH. ' ...
          'Falling back to VideoWriter (Motion JPEG 2000).']);
@@ -108,169 +122,143 @@ cam.TriggerRepeat    = Inf;
 % a recycled/preconfigured object can't leave a stale DiskLogger attached.
 cam.LoggingMode = 'memory';
 
-% Build ffmpeg command
-vidInfo  = cam.VideoResolution;       % [width height]
-width    = vidInfo(1);
-height   = vidInfo(2);
-fps      = RigParameters.video_acquisition_rate;
-encoder  = 'h264_nvenc';
-if isprop(RigParameters, 'ffmpegEncoder')
-    encoder = RigParameters.ffmpegEncoder;
-end
+vidInfo = cam.VideoResolution;       % [width height]
+width   = vidInfo(1);
+height  = vidInfo(2);
+fps     = RigParameters.video_acquisition_rate;
 
-encoderArgs = buildEncoderArgs(RigParameters, encoder);
-
-extraArgs = '';
-if isprop(RigParameters, 'ffmpegExtraArgs') && ~isempty(RigParameters.ffmpegExtraArgs)
-    extraArgs = RigParameters.ffmpegExtraArgs;
-end
-
-% Replace .mj2 extension with .mp4 if caller passed the wrong extension
+% Replace .mj2 extension with .mp4 if caller passed the wrong extension.
+% ffmpeg's combined stdout/stderr goes to an adjacent .ffmpeg.log file.
 [fdir, fname, ~] = fileparts(video_filename);
 mp4_filename = fullfile(fdir, [fname '.mp4']);
+logfile      = fullfile(fdir, [fname '.ffmpeg.log']);
 
-% Camera delivers single-channel Mono8 (-pix_fmt gray on input). Force a
-% widely-compatible output pixel format so the .mp4 plays in standard
-% players / H.264 decoders that don't accept grayscale streams.
-cmdParts = { 'ffmpeg', '-y', ...
-    '-f', 'rawvideo', '-pix_fmt', 'gray', ...
-    '-s', sprintf('%dx%d', width, height), '-r', num2str(fps), ...
-    '-i', 'pipe:0', ...
-    '-c:v', encoder };
-cmdParts = [cmdParts, splitArgs(encoderArgs), splitArgs(extraArgs), ...
-            {'-pix_fmt', 'yuv420p', mp4_filename}];
+% Choose the encoder now. Falling back mid-recording would change the file's
+% encoding silently, so the only fallback is here, before acquisition.
+try
+    [opts, preflight, fellBack] = selectEncoder(ffmpegExe, RigParameters, ...
+        width, height, fps, logfile);
+catch err
+    delete(cam);
+    rethrow(err);
+end
+
+cmdParts = buildFFmpegCommand(ffmpegExe, opts, width, height, fps, ...
+    'pipe:0', mp4_filename);
+appendLog(logfile, sprintf('Recording command:\n  %s\n\n', strjoin(cmdParts, ' ')));
 
 % Launch ffmpeg via Java ProcessBuilder so we get a real handle on its stdin.
-% redirectErrorStream keeps stderr from filling the OS pipe buffer (which
-% would otherwise deadlock ffmpeg); a drain thread empties it continuously.
+% Its output is appended to the log file by the OS, so nothing in MATLAB has
+% to drain a pipe while frames are written or while stop waits for exit.
 try
     pb = java.lang.ProcessBuilder(cmdParts);
     pb.redirectErrorStream(true);
+    pb.redirectOutput(javaMethod('appendTo', 'java.lang.ProcessBuilder$Redirect', ...
+        java.io.File(logfile)));
     proc = pb.start();
 catch err
     delete(cam);
     error('PureVirmen:ffmpegLaunchFailed', ...
-        'Failed to launch ffmpeg.\n  Command: %s\n  Error: %s', ...
-        strjoin(cmdParts, ' '), err.message);
+        'Failed to launch ffmpeg.\n  Command: %s\n  Error: %s\n  Log: %s', ...
+        strjoin(cmdParts, ' '), err.message, logfile);
 end
-
-stdin = proc.getOutputStream();   % we write raw frames here
-
-% Background-drain ffmpeg's merged stdout/stderr so its output buffer never
-% fills and stalls encoding. A MATLAB timer polling the reader is portable
-% (no custom Java class needed); it stops itself once ffmpeg closes the stream.
-logReader = java.io.BufferedReader( ...
-    java.io.InputStreamReader(proc.getInputStream()));
-drainTimer = timer( ...
-    'ExecutionMode', 'fixedSpacing', ...
-    'Period',        0.5, ...
-    'BusyMode',      'drop', ...
-    'TimerFcn',      @(t, ~) drainReader(t, logReader), ...
-    'Name',          'ffmpegLogDrain');
-start(drainTimer);
 
 % Package everything the start/stop functions need. The frame-streaming
 % callback is wired up in startVideoAcquisition once acquisition begins.
 v = struct();
-v.type       = 'ffmpeg';
-v.cam        = cam;
-v.proc       = proc;
-v.stdin      = stdin;
-v.drainTimer = drainTimer;
-v.filename   = mp4_filename;
-v.width      = width;
-v.height     = height;
-v.cmd        = strjoin(cmdParts, ' ');
+v.type             = 'ffmpeg';
+v.cam              = cam;
+v.proc             = proc;
+v.stdin            = proc.getOutputStream();   % we write raw frames here
+v.filename         = mp4_filename;
+v.logfile          = logfile;
+v.width            = width;
+v.height           = height;
+v.cmd              = strjoin(cmdParts, ' ');
+v.encoder          = opts.encoder;
+v.requestedEncoder = preflight(1).encoder;
+v.encoderFallback  = fellBack;
+v.preflight        = preflight;
 
 end
 
 % -------------------------------------------------------------------------
 
-function drainReader(t, reader)
-% Read and discard all currently-available lines from ffmpeg's output. When
-% the stream is closed (ffmpeg exited), readLine returns [] and we stop.
-try
-    while reader.ready()
-        line = reader.readLine();
-        if isempty(line)
-            stop(t);
-            return;
-        end
-    end
-catch
-    stop(t);   % stream closed underneath us; nothing more to drain
-end
-end
+function [opts, preflight, fellBack] = selectEncoder(ffmpegExe, RigParameters, ...
+        width, height, fps, logfile)
+% Preflight the requested encoder. If an NVENC encoder fails, warn with
+% ffmpeg's diagnostic and use libx264 instead; if that also fails, or a
+% non-NVENC encoder fails, error before the experiment starts.
 
-% -------------------------------------------------------------------------
+fid = fopen(logfile, 'w');
+if fid < 0
+    error('PureVirmen:ffmpegLogFailed', 'Cannot write ffmpeg log file %s.', logfile);
+end
+fprintf(fid, 'PureVirmen ffmpeg log, %s\nffmpeg: %s\n\n', ...
+    datestr(now, 'yyyy-mm-dd HH:MM:SS'), ffmpegExe);
+fclose(fid);
 
-function parts = splitArgs(argStr)
-% Split a whitespace-separated argument string into a cell array, dropping
-% empties. ProcessBuilder needs each token as a separate element (no shell
-% to do word-splitting for us).
-if isempty(argStr)
-    parts = {};
+opts      = ffmpegEncoderOptions(RigParameters);
+preflight = preflightFFmpegEncoder(ffmpegExe, opts, width, height, fps);
+logPreflight(logfile, preflight);
+fellBack  = false;
+
+if preflight.ok
     return;
 end
-parts = strsplit(strtrim(argStr));
-parts = parts(~cellfun(@isempty, parts));
+
+if ~contains(opts.encoder, 'nvenc')
+    error('PureVirmen:ffmpegPreflightFailed', ...
+        ['ffmpeg could not encode test frames with encoder ''%s'' at %dx%d, ' ...
+         '%g fps. Recording has not started.\n' ...
+         'Check RigParameters.ffmpegEncoder, ffmpegPreset, ffmpegCRF and ' ...
+         'ffmpegExtraArgs, or set useFFmpeg = false to record with VideoWriter.\n' ...
+         'Log: %s\n\nffmpeg output:\n%s'], ...
+        opts.encoder, width, height, fps, logfile, preflight.diagnostic);
+end
+
+warning('PureVirmen:ffmpegEncoderFallback', ...
+    ['GPU encoder ''%s'' failed its preflight, so this session will record ' ...
+     'with CPU libx264 instead. Update the NVIDIA driver, or set ' ...
+     'RigParameters.ffmpegEncoder = ''libx264'' to skip the GPU attempt.\n' ...
+     'Log: %s\n\nffmpeg output:\n%s'], ...
+    opts.encoder, logfile, preflight.diagnostic);
+
+opts     = ffmpegEncoderOptions(RigParameters, 'libx264');
+fallback = preflightFFmpegEncoder(ffmpegExe, opts, width, height, fps);
+logPreflight(logfile, fallback);
+preflight = [preflight, fallback];
+fellBack  = true;
+
+if ~fallback.ok
+    error('PureVirmen:ffmpegPreflightFailed', ...
+        ['Neither GPU encoder ''%s'' nor CPU fallback libx264 could encode ' ...
+         'test frames at %dx%d, %g fps. Recording has not started.\n' ...
+         'Check RigParameters.ffmpegExtraArgs and the ffmpeg build, or set ' ...
+         'useFFmpeg = false to record with VideoWriter.\nLog: %s\n\n' ...
+         '%s output:\n%s\n\nlibx264 output:\n%s'], ...
+        preflight(1).encoder, width, height, fps, logfile, ...
+        preflight(1).encoder, preflight(1).diagnostic, fallback.diagnostic);
+end
+
 end
 
 % -------------------------------------------------------------------------
 
-function drainProcessOutput(proc)
-% Continuously read and discard ffmpeg's (merged) stdout/stderr on a Java
-% thread so its output buffer never fills and stalls encoding. The thread
-% exits on its own when ffmpeg closes the stream at shutdown.
-reader = java.io.BufferedReader( ...
-    java.io.InputStreamReader(proc.getInputStream()));
-runnable = java.lang.Runnable.empty; %#ok<NASGU>
-t = java.lang.Thread(DrainRunnable(reader)); %#ok<NASGU>
-% DrainRunnable is unavailable as a Java class in base MATLAB, so fall back
-% to a timer that polls the reader if the helper class is absent.
-% (Kept simple: use a MATLAB timer to drain.)
-end
-
-% -------------------------------------------------------------------------
-
-function args = buildEncoderArgs(RigParameters, encoder)
-% Build encoder-specific ffmpeg argument string.
-%
-%   NVENC (h264_nvenc / hevc_nvenc):
-%     Uses ffmpegBitrate and ffmpegPreset.
-%     CRF is not supported by NVENC — use bitrate control instead.
-%
-%   libx264 / libx265 (CPU):
-%     Uses ffmpegCRF and ffmpegPreset.
-%     Bitrate is not set — CRF gives constant-quality output.
-
-isNvenc  = contains(encoder, 'nvenc');
-isX264   = contains(encoder, 'libx264') || contains(encoder, 'libx265');
-
-preset = 'fast';
-if isprop(RigParameters, 'ffmpegPreset') && ~isempty(RigParameters.ffmpegPreset)
-    preset = RigParameters.ffmpegPreset;
-end
-
-if isNvenc
-    % NVENC: bitrate-controlled
-    bitrate = '5M';
-    if isprop(RigParameters, 'ffmpegBitrate') && ~isempty(RigParameters.ffmpegBitrate)
-        bitrate = RigParameters.ffmpegBitrate;
-    end
-    args = sprintf('-preset %s -b:v %s', preset, bitrate);
-
-elseif isX264
-    % libx264/libx265: CRF quality-controlled
-    crf = 23;
-    if isprop(RigParameters, 'ffmpegCRF') && ~isempty(RigParameters.ffmpegCRF)
-        crf = RigParameters.ffmpegCRF;
-    end
-    args = sprintf('-preset %s -crf %d', preset, crf);
-
+function logPreflight(logfile, result)
+if result.ok
+    status = 'passed';
 else
-    % Unknown encoder — pass no extra args; rely on ffmpegExtraArgs if needed
-    args = '';
+    status = sprintf('FAILED (exit code %g)', result.exitCode);
+end
+appendLog(logfile, sprintf('Preflight %s: %s\n  %s\n%s\n\n', ...
+    result.encoder, status, result.command, result.diagnostic));
 end
 
+function appendLog(logfile, text)
+fid = fopen(logfile, 'a');
+if fid >= 0
+    fwrite(fid, text, 'char');
+    fclose(fid);
+end
 end

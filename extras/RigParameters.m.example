@@ -60,6 +60,16 @@ classdef RigParameters
     % Set useFFmpeg = true and choose ONE of the two encoder configurations
     % below. Falls back to VideoWriter automatically if ffmpeg is unavailable.
     %
+    % Before each recording the chosen encoder encodes a few test frames at
+    % the camera's resolution. If NVENC fails (often an NVIDIA driver older
+    % than the ffmpeg build requires), the session records with libx264
+    % instead and warns PureVirmen:ffmpegEncoderFallback. If libx264 fails
+    % too, startVideoAcquisition errors before the experiment starts.
+    % ffmpeg's output goes to <video name>.ffmpeg.log next to the video.
+    % The fallback uses ffmpegCRF (default 23), ffmpegPreset if libx264
+    % accepts it (else 'fast'), and ffmpegExtraArgs, so keep extra args
+    % encoder-neutral or the fallback will fail its preflight.
+    %
     % NVENC — NVIDIA GPU (Windows, recommended for rigs with NVIDIA cards):
     %   ffmpegEncoder  = 'h264_nvenc'
     %   ffmpegPreset   = 'fast'   % 'fast' | 'medium' | 'slow' | 'lossless'

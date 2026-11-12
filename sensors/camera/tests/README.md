@@ -10,6 +10,14 @@ are required** — anyone can run them to verify the recording pipeline.
 |------|---------|
 | `smokeTestFFmpegTransport.m` | End-to-end check of the ffmpeg recording path: drives the real `pushFramesToFFmpeg` through a real ffmpeg subprocess and verifies a readable `.mp4` is produced with frames in the correct byte order. |
 | `FakeImaqCamera.m` | Minimal stand-in for an IMAQ `videoinput` object (exposes `FramesAvailable` and `getdata`). |
+| `testCameraRecording.m` | Checks initialization-time offsets, empty/single timelines, constant-rate frame timestamps, disk-logger flushing before deletion, and reporting of failed FFmpeg processes. |
+| `testFFmpegEncoderFallback.m` | Runs the real `startVideoAcquisition` → `configureSingleCamera` → ffmpeg → `stopVideoAcquisition` path on a virtual camera. Checks the encoder preflight, the NVENC → libx264 fallback (forced with an encoder name no ffmpeg has, so it doesn't depend on the GPU), errors before recording when no encoder works, and the real `h264_nvenc` on this machine (either outcome passes). It reads each video back to check frame count, order and byte order. |
+| `fixtures/private/virtualCamera/` | `videoinput`/`imaqreset` doubles and a `VirtualCamera` that "acquires" 17 frames and fires `FramesAcquiredFcn`. The private directory keeps these mocks out of `genpath(repo)` in real experiments. `testFFmpegEncoderFallback` temporarily takes the Image Acquisition Toolbox folders off the path; otherwise IMAQ's `videoinput` class takes precedence over the double. |
+
+On the ffmpeg path, ffmpeg's output (preflights included) goes to
+`<video name>.ffmpeg.log` next to the video (`v.logfile`). Nothing in MATLAB
+drains a pipe, so frame writes and the wait at stop can't deadlock on a full
+stderr buffer.
 
 The smoke test writes a known marker pixel at an **asymmetric** coordinate
 `(row=11, col=37)` into 64×48 frames and asserts it reads back at the same
@@ -20,7 +28,7 @@ this catches the one class of bug that can't be caught by reading the code.
 ## Requirements
 
 - MATLAB (verified on R2023b) — only core MATLAB, no toolboxes.
-- `ffmpeg` on the system `PATH` (verified with ffmpeg 8.1, `libx264`).
+- `ffmpeg` on the system `PATH` (verified with ffmpeg 8.1 and 9.0.2, `libx264`). `testFFmpegEncoderFallback` also adds the WinGet `Links` folder to `PATH` when ffmpeg was installed with WinGet.
   - macOS: `brew install ffmpeg`
   - Windows: install ffmpeg and add its `bin` folder to `PATH`
   - Linux: `apt install ffmpeg` (or distro equivalent)
@@ -63,3 +71,13 @@ matlab -batch "addpath('sensors/camera/tests'); runCameraTests"
 `runCameraTests.m` runs every test, prints a PASS/FAIL summary, and calls
 `exit(1)` on failure (and exits 0 on success), so it can be dropped straight
 into CI.
+
+Synchronization logs must include `timeElapsedFirstTrial` copied from
+`vr.timeElapsedFirstTrial`, along with `timeElapsedVideoStart` and loop-relative
+`iterationTimes`. Both clocks are then aligned to `vr.preTic`. Supplying
+`frameTimes` uses camera timestamps relative to video start; otherwise frame
+timestamps are reconstructed from the file frame rate and assume no drops.
+
+Tests use small synthetic frames, not a FLIR camera or a mini rig. Encoder
+preflight proves that encoding works, not that CPU fallback keeps up at a
+rig's full resolution and frame rate; that needs an on-rig check.
